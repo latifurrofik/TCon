@@ -1,6 +1,4 @@
-google-api-python-client==2.0.2
-google-auth-oauthlib==1.1.0
-google-auth-httplib2==0.1.1
-openai-whisper==20231117
-torch --extra-index-url https://download.pytorch.org/whl/cpu
-ffmpeg-python
+google-api-python-client==2.143.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+google-auth==2.35.0
