@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.env
+token.json
+client_secret*.json
+videos/
+done/
+output/
+reports/
+.venv/
