@@ -59,10 +59,10 @@ async def main():
                     })
 
         duration = MP3(str(target)).info.length
-        scene_start = int(scene["start"] / 30)
-        captions = make_chunks(word_events, scene["start"])
+        scene_start_frame = round(scene["start"] * FPS)
+        captions = make_chunks(word_events, scene_start_frame)
         all_captions.append({"scene": index, "captions": captions})
-        scene_seconds = (scene["end"] - scene["start"]) / FPS
+        scene_seconds = scene["end"] - scene["start"]
         manifest.append({
             "scene": index,
             "file": f"audio/episode-01/scene-{index:02d}.mp3",
