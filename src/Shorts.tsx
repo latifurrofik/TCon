@@ -1,9 +1,11 @@
 import React from 'react';
-import {AbsoluteFill, interpolate, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, Img, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {episode01, Scene} from './episode';
 
 const BG = '#080d18';
 const YELLOW = '#ffd447';
+
+type Props = {useGeneratedAssets?: boolean; useNarration?: boolean};
 
 const Symbol: React.FC<{type: Scene['visual']; progress: number}> = ({type, progress}) => {
   const scale = 0.88 + progress * 0.12;
@@ -14,7 +16,7 @@ const Symbol: React.FC<{type: Scene['visual']; progress: number}> = ({type, prog
   return <div style={{...common,width:330,height:330,borderRadius:180,border:`12px solid ${YELLOW}`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:220,color:YELLOW,fontWeight:900}}>?</div>;
 };
 
-export const TConShorts: React.FC = () => {
+export const TConShorts: React.FC<Props> = ({useGeneratedAssets = false, useNarration = false}) => {
   const frame = useCurrentFrame();
   const scene = episode01.scenes.find((s) => frame >= s.start && frame < s.end) ?? episode01.scenes[0];
   const local = frame - scene.start;
@@ -25,12 +27,13 @@ export const TConShorts: React.FC = () => {
   const opacity = Math.min(enter,exit);
   const drift = interpolate(local,[0,duration],[35,-35]);
   return <AbsoluteFill style={{background:BG,color:'#f5f7fb',fontFamily:'Arial, Helvetica, sans-serif',padding:'100px 76px',justifyContent:'space-between',overflow:'hidden'}}>
+    {useNarration && <Audio src={staticFile(scene.audio)} volume={1}/>}
     <AbsoluteFill style={{background:'radial-gradient(ellipse at 50% 43%, #1b2b42 0%, #080d18 66%)'}}/>
     <div style={{position:'absolute',top:0,left:0,width:'100%',height:14,background:'#253247'}}><div style={{height:'100%',width:`${frame/1500*100}%`,background:YELLOW}}/></div>
     <div style={{zIndex:1,opacity,fontSize:27,fontWeight:800,letterSpacing:5,color:YELLOW}}>{scene.eyebrow}</div>
     <div style={{zIndex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:70,transform:`translateY(${drift}px)`,opacity}}>
       <div style={{fontSize:76,lineHeight:1.12,fontWeight:900,textAlign:'center',whiteSpace:'pre-line',letterSpacing:-2,textShadow:'0 8px 30px #0008'}}>{scene.headline}</div>
-      <Symbol type={scene.visual} progress={progress}/>
+      {useGeneratedAssets ? <Img src={staticFile(scene.image)} style={{width:760,height:760,objectFit:'contain'}}/> : <Symbol type={scene.visual} progress={progress}/>}
       <div style={{fontSize:38,lineHeight:1.35,textAlign:'center',maxWidth:850,color:'#d6deeb'}}>{scene.caption}</div>
     </div>
     <div style={{zIndex:1,display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:24,fontWeight:800,letterSpacing:4,color:'#8794a8'}}>
