@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Audio, Img, interpolate, staticFile, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, Img, Sequence, interpolate, staticFile, useCurrentFrame} from 'remotion';
 import {episode01, Scene} from './episode';
 
 const BG = '#080d18';
@@ -27,7 +27,7 @@ export const TConShorts: React.FC<Props> = ({useGeneratedAssets = false, useNarr
   const opacity = Math.min(enter,exit);
   const drift = interpolate(local,[0,duration],[35,-35]);
   return <AbsoluteFill style={{background:BG,color:'#f5f7fb',fontFamily:'Arial, Helvetica, sans-serif',padding:'100px 76px',justifyContent:'space-between',overflow:'hidden'}}>
-    {useNarration && <Audio src={staticFile(scene.audio)} volume={1}/>}
+    {useNarration && episode01.scenes.map((audioScene, index) => <Sequence key={audioScene.audio} from={audioScene.start} durationInFrames={audioScene.end - audioScene.start}><Audio src={staticFile(audioScene.audio)} volume={1}/></Sequence>)}
     <AbsoluteFill style={{background:'radial-gradient(ellipse at 50% 43%, #1b2b42 0%, #080d18 66%)'}}/>
     <div style={{position:'absolute',top:0,left:0,width:'100%',height:14,background:'#253247'}}><div style={{height:'100%',width:`${frame/1500*100}%`,background:YELLOW}}/></div>
     <div style={{zIndex:1,opacity,fontSize:27,fontWeight:800,letterSpacing:5,color:YELLOW}}>{scene.eyebrow}</div>
