@@ -4,13 +4,13 @@
   "private": true,
   "scripts": {
     "studio": "remotion studio src/index.tsx",
-    "render:ep01": "remotion render src/index.tsx TConShorts remotion/out/episode-01.mp4",
+    "render:ep01": "remotion render src/index.tsx TConShorts out/episode-01.mp4",
     "upgrade": "remotion upgrade"
   },
   "dependencies": {
-    "@remotion/cli": "4.0.",
-    "@remotion/renderer": "4.0.",
-    "remotion": "4.0.",
+    "@remotion/cli": "^4.0.0",
+    "@remotion/renderer": "^4.0.0",
+    "remotion": "^4.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
