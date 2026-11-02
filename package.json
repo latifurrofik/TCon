@@ -7,7 +7,7 @@
     "dev": "remotion studio src/index.ts",
     "typecheck": "tsc --noEmit",
     "render:episode-01": "mkdir -p out && remotion render src/index.ts TConShorts out/episode-01.mp4",
-    "render:episode-01:assets": "mkdir -p out && remotion render src/index.ts TConShorts out/episode-01.mp4 --props='{\"useGeneratedAssets\":true,\"useNarration\":true}'",
+    "render:episode-01:assets": "mkdir -p out && remotion render src/index.ts TConShorts out/episode-01.mp4 --props='{\"useGeneratedAssets\":true,\"useNarration\":true,\"useSubtitles\":true}'",
     "still": "mkdir -p out && remotion still src/index.ts TConShorts out/preview.png --frame=120"
   },
   "dependencies": {
