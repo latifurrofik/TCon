@@ -1,0 +1,56 @@
+{
+  "id": "episode-01",
+  "series_id": "disetir-media-sosial",
+  "title": "Kamu Sadar Sedang Disetir?",
+  "language": "id-ID",
+  "voice": "id-ID-GadisNeural",
+  "format": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "duration_seconds": 50
+  },
+  "sources": [],
+  "scenes": [
+    {
+      "start": 0,
+      "end": 8,
+      "headline": "KAMU SADAR\nSEDANG DISETIR?",
+      "caption": "Bukan setir mobil. Tapi perhatianmu.",
+      "narration": "Pernah buka media sosial cuma untuk melihat sebentar, tapi tiba-tiba waktu sudah berlalu begitu lama? Bisa jadi perhatianmu sedang diarahkan.",
+      "visual_prompt": "A symbolic anonymous young adult seen from behind holding a glowing smartphone in a dim room; a focused beam of attention extends from the screen into the surrounding space."
+    },
+    {
+      "start": 8,
+      "end": 17,
+      "headline": "SATU APLIKASI",
+      "caption": "Awalnya cuma ingin melihat sebentar.",
+      "narration": "Awalnya hanya satu notifikasi. Lalu satu video muncul, disusul video berikutnya. Tanpa rencana, jempol terus bergerak.",
+      "visual_prompt": "Close-up of a hand holding a smartphone as abstract content cards appear one after another, creating a visual sequence that draws the viewer onward."
+    },
+    {
+      "start": 17,
+      "end": 27,
+      "headline": "WAKTU BERJALAN",
+      "caption": "Lima menit bisa berubah menjadi satu jam.",
+      "narration": "Platform digital memakai sistem rekomendasi untuk memilih konten yang kemungkinan menarik perhatianmu. Sistem itu belajar dari apa yang kamu tonton dan lakukan.",
+      "visual_prompt": "A clock face gradually transforms into a flowing stream of content cards, showing time passing as recommendations continue."
+    },
+    {
+      "start": 27,
+      "end": 39,
+      "headline": "FEED PUNYA POLA",
+      "caption": "Apa yang muncul dipilih oleh sistem rekomendasi.",
+      "narration": "Bukan berarti semua pilihanmu dikendalikan. Tetapi urutan konten yang kamu lihat dapat memengaruhi apa yang kamu pikirkan, rasakan, dan perhatikan.",
+      "visual_prompt": "A branching recommendation network routes different content cards toward an anonymous person, showing influence without implying total control."
+    },
+    {
+      "start": 39,
+      "end": 50,
+      "headline": "SIAPA PEGANG KENDALI?",
+      "caption": "Sadari polanya. Pilih dengan sadar.",
+      "narration": "Jadi, lain kali saat membuka feed, berhenti sejenak dan tanyakan: aku memang ingin melihat ini, atau hanya terus mengikuti rekomendasi? Kamu yang pegang kendali.",
+      "visual_prompt": "An anonymous person lowers a smartphone and turns toward an open, warmly lit doorway, suggesting a deliberate choice to step away."
+    }
+  ]
+}

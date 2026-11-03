@@ -12,10 +12,15 @@ TCon is a cloud-first production system for Indonesian YouTube Shorts. The repos
 ## Current production entry points
 - `package.json`: single root Node/Remotion project.
 - `src/`: Remotion composition and episode rendering components.
-- `data/episode-01.json`: current sample episode source.
+- `data/episodes/episode_N/`: canonical workspace for each episode; see `data/episodes/README.md`.
+- `data/episode-01.json`: legacy sample retained temporarily for pipeline compatibility.
 - `scripts/`: media generation scripts.
 - `.github/workflows/`: cloud validation and manual production workflows.
 - `docs/`: architecture, operations, and implementation decisions.
+
+## Episode workspace
+
+Each episode uses a short, consistent folder name such as `data/episodes/episode_1/`. It contains `metadata.json`, `naskah/`, `prompt/`, `assets/`, `audio/`, and `output/`. Copy `data/episodes/episode-template/` when starting a new episode. See [episode workspace rules](data/episodes/README.md).
 
 ## Run from GitHub on Android
 1. Open **Actions**.
