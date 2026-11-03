@@ -17,7 +17,7 @@ TCon is an Android-first workspace for collaboration between ChatGPT (OpenAI), G
 - Unit tests for orchestration order, transcript propagation, turn/length bounds, and provider failure handling.
 - Indonesian push-to-talk speech recognition using the Android speech service.
 - Sequential AI response playback through Android TextToSpeech, with pitch differences to distinguish speakers.
-- In-app update checker: checks the latest stable GitHub Release, compares semantic version tags, downloads its APK with Android DownloadManager, and opens the Android package installer through a private FileProvider URI. Installation always remains under Android/user control.
+- In-app update checker: checks the latest stable GitHub Release, compares semantic version tags, requires GitHub's SHA-256 asset digest, verifies the downloaded APK's exact size and SHA-256, then opens Android's package installer through a private FileProvider URI. Downloads are capped at 150 MB and time out after 15 minutes. Installation always remains under Android/user control.
 
 ## Build
 Open this directory in Android Studio, sync Gradle, and run the `app` configuration.
@@ -38,7 +38,7 @@ Requirements: JDK 17, Android SDK Platform 35, Android 8.0 (API 26) or newer.
 
 The home screen's **Periksa pembaruan TCon** button checks:
 `https://api.github.com/repos/latifurrofik/TCon/releases/latest`.
-Only stable, non-draft GitHub Releases are considered. The release tag (for example `v0.1.1`) is compared with the installed `versionName`. The release must include an APK asset. The user confirms the download, Android DownloadManager downloads it, and Android's package installer handles the final installation. If Android requests permission to install unknown apps, enable it for TCon in system settings and return to TCon.
+Only stable, non-draft GitHub Releases are considered. The release tag (for example `v0.1.1`) is compared with the installed `versionName`. The release must include an APK asset with a GitHub-provided SHA-256 digest and a size no larger than 150 MB. The user confirms the download, Android DownloadManager downloads it, and Android's package installer handles the final installation. If Android requests permission to install unknown apps, enable it for TCon in system settings and return to TCon.
 
 A signed-release workflow is available at `.github/workflows/android-release.yml` and is **manual only**. Before using it, configure these GitHub Actions Secrets:
 - `TCON_RELEASE_KEYSTORE_BASE64`: Base64 content of the permanent JKS keystore.
