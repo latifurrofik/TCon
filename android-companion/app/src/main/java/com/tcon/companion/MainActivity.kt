@@ -200,9 +200,14 @@ class MainActivity : Activity() {
             return
         }
 
+        val availableSlots = (TextAttachmentReader.MAX_FILES - selectedAttachments.size).coerceAtLeast(0)
+        if (availableSlots == 0) {
+            toast("Maksimal ${TextAttachmentReader.MAX_FILES} dokumen per diskusi.")
+            return
+        }
         activityScope.launch {
             val results = withContext(Dispatchers.IO) {
-                uris.take(TextAttachmentReader.MAX_FILES - selectedAttachments.size).map { uri ->
+                uris.take(availableSlots).map { uri ->
                     runCatching { TextAttachmentReader.read(contentResolver, uri) }
                 }
             }
@@ -218,7 +223,7 @@ class MainActivity : Activity() {
                 }
             }
             updateAttachmentStatus()
-            if (added > 0) toast("$" + "{added} dokumen berhasil dilampirkan.")
+            if (added > 0) toast("${added} dokumen berhasil dilampirkan.")
         }
     }
 
