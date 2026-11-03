@@ -1,0 +1,11 @@
+# Local Android/Gradle state
+.gradle/
+local.properties
+build/
+app/build/
+
+# Release signing material — never commit private keys
+*.jks
+*.keystore
+*.p12
+*.pfx
