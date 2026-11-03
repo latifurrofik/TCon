@@ -11,12 +11,19 @@ data class AiMessage(
     val createdAtEpochMs: Long = System.currentTimeMillis()
 )
 
+data class BinaryAttachment(
+    val name: String,
+    val mimeType: String,
+    val base64Data: String
+)
+
 data class MeetingConfig(
     val topic: String,
     val participants: List<ProviderId>,
     val maxTurnsPerProvider: Int = 1,
     val maxResponseCharacters: Int = 1600,
-    val projectContext: String = ""
+    val projectContext: String = "",
+    val attachments: List<BinaryAttachment> = emptyList()
 ) {
     init {
         require(topic.isNotBlank()) { "Topik rapat tidak boleh kosong." }
