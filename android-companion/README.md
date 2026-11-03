@@ -12,6 +12,7 @@ TCon is an Android-first workspace for collaboration between ChatGPT (OpenAI), G
 - Meeting setup lets users select configured AI participants and choose 1–5 rounds; each selected AI gets one turn per round.
 - Local SQLite history records meeting topics and transcript entries, with a viewer for the latest 50 meetings.
 - Editable local project memory notes can be added and deleted; up to 5,000 characters of saved notes are passed as reference context to each AI in a new meeting.
+- A local task board supports creating, editing, deleting, and tracking tasks through three statuses; open tasks are passed as reference context to new AI meetings.
 - Users can attach up to five small text documents (TXT, Markdown, CSV/TSV, JSON, XML, HTML, YAML, LOG; 512 KB each). Their extracted UTF-8 text is included as reference context for all selected AI participants.
 - Unit tests for orchestration order, transcript propagation, turn/length bounds, and provider failure handling.
 - Indonesian push-to-talk speech recognition using the Android speech service.
