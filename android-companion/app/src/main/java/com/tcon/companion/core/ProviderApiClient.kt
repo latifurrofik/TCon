@@ -1,6 +1,10 @@
 package com.tcon.companion.core
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
@@ -30,34 +34,52 @@ class ProviderApiClient(
         conversation: List<AiMessage>,
         maxResponseCharacters: Int
     ): Result<String> = withContext(Dispatchers.IO) {
-        runCatching {
-            val secret = apiKey()?.takeIf { it.isNotBlank() }
-                ?: error("API key untuk $displayName belum disimpan.")
-            val (endpoint, body, headers) = requestFor(secret, systemInstruction, conversation)
-            val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
-                requestMethod = "POST"
-                connectTimeout = 20_000
-                readTimeout = 60_000
-                doOutput = true
-                setRequestProperty("Content-Type", "application/json")
-                headers.forEach { (name, value) -> setRequestProperty(name, value) }
+        val secret = apiKey()?.takeIf { it.isNotBlank() }
+            ?: return@withContext Result.failure(IllegalStateException("API key untuk $displayName belum disimpan."))
+        val (endpoint, body, headers) = requestFor(secret, systemInstruction, conversation)
+        val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
+            requestMethod = "POST"
+            connectTimeout = 20_000
+            readTimeout = 60_000
+            doOutput = true
+            setRequestProperty("Content-Type", "application/json")
+            headers.forEach { (name, value) -> setRequestProperty(name, value) }
+        }
+        // Disconnect the blocking HTTP request as soon as the coroutine is cancelled.
+        val cancellationHandle = currentCoroutineContext()[Job]?.invokeOnCompletion { cause ->
+            if (cause is CancellationException) connection.disconnect()
+        }
+        try {
+            currentCoroutineContext().ensureActive()
+            connection.outputStream.use {
+                it.write(body.toString().toByteArray(Charsets.UTF_8))
             }
-            try {
-                connection.outputStream.use { it.write(body.toString().toByteArray(Charsets.UTF_8)) }
-                val status = connection.responseCode
-                val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-                val responseText = stream?.use { input ->
-                    BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText()
-                }.orEmpty()
-                if (status !in 200..299) {
-                    val detail = runCatching { JSONObject(responseText).optJSONObject("error")?.optString("message") }.getOrNull()
-                    error("$displayName API HTTP $status: ${detail?.takeIf { it.isNotBlank() } ?: responseText.take(500)}")
-                }
-                extractText(JSONObject(responseText)).trim().take(maxResponseCharacters)
-                    .ifBlank { error("$displayName mengembalikan respons kosong.") }
-            } finally {
-                connection.disconnect()
+            currentCoroutineContext().ensureActive()
+            val status = connection.responseCode
+            val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+            val responseText = stream?.use { input ->
+                BufferedReader(InputStreamReader(input, Charsets.UTF_8)).readText()
+            }.orEmpty()
+            currentCoroutineContext().ensureActive()
+            if (status !in 200..299) {
+                val detail = runCatching {
+                    JSONObject(responseText).optJSONObject("error")?.optString("message")
+                }.getOrNull()
+                error("$displayName API HTTP $status: ${detail?.takeIf { it.isNotBlank() } ?: responseText.take(500)}")
             }
+            val answer = extractText(JSONObject(responseText)).trim().take(maxResponseCharacters)
+            if (answer.isBlank()) {
+                Result.failure(IllegalStateException("$displayName mengembalikan respons kosong."))
+            } else {
+                Result.success(answer)
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
+        } finally {
+            cancellationHandle?.dispose()
+            connection.disconnect()
         }
     }
 
