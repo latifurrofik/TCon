@@ -93,7 +93,21 @@ Dokumen ini adalah backlog utama pengembangan TCon. Semua pekerjaan dimulai deng
 
 **Kriteria selesai P6:** data dan akses dikelola dengan aman, dapat dipulihkan, dan aktivitas penting dapat diaudit.
 
-## Catatan keputusan
+## P7 — Social Media Command Center (monitoring multi-platform)
+
+- [ ] Rancang dashboard terpusat untuk seluruh akun media sosial yang dihubungkan pengguna.
+- [ ] Prioritaskan integrasi resmi Meta (Facebook dan Instagram) serta YouTube; tambahkan platform lain setelah API dan izin aksesnya dievaluasi.
+- [ ] Buat alur OAuth/koneksi akun, pemilihan aset atau halaman yang dikelola, pemeriksaan izin, dan pencabutan akses.
+- [ ] Tampilkan metrik yang tersedia per platform, seperti views, reach, impressions, engagement, watch time, pengikut, dan subscriber; jangan mengasumsikan semua metrik tersedia di setiap platform.
+- [ ] Buat ringkasan performa lintas akun dan perbandingan antarperiode dengan definisi metrik yang jelas.
+- [ ] Pantau postingan, komentar, pesan, dan notifikasi hanya jika API serta izin aplikasi mengizinkannya.
+- [ ] Buat sinkronisasi terjadwal, penanganan rate limit, token kedaluwarsa, kegagalan koneksi, dan status data terakhir diperbarui.
+- [ ] Buat peringatan untuk perubahan performa atau aktivitas penting dengan ambang batas yang dapat diatur pengguna.
+- [ ] Terapkan kontrol privasi, penyimpanan token yang aman, pembatasan akses, dan log audit untuk setiap akun terhubung.
+- [ ] Dokumentasikan keterbatasan API, proses persetujuan aplikasi platform, kuota, dan biaya operasional.
+
+**Kriteria selesai P7:** pengguna dapat menghubungkan akun secara resmi dan memantau data yang memang tersedia melalui API dari satu dashboard TCon.
+
 
 - Target perangkat utama: Android.
 - Strategi biaya: prioritaskan opsi gratis dan biaya rendah; verifikasi batas kuota sebelum mengandalkan layanan.
