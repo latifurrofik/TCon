@@ -13,6 +13,13 @@ data class MeetingHistorySummary(
     val rounds: Int
 )
 
+data class ProjectMemoryItem(
+    val id: Long,
+    val title: String,
+    val content: String,
+    val updatedAt: Long
+)
+
 data class MeetingHistoryEntry(
     val speaker: String,
     val content: String,
@@ -54,9 +61,46 @@ class MeetingHistoryStore(context: Context) :
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        // No released schema exists yet. Future migrations must preserve user history.
+        if (oldVersion < 2) {
+            db.execSQL(
+                """CREATE TABLE project_memory (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    title TEXT NOT NULL,
+                    content TEXT NOT NULL,
+                    updated_at INTEGER NOT NULL
+                )""".trimIndent()
+            )
+        }
     }
 
+    fun addMemory(title: String, content: String): Long {
+        val values = ContentValues().apply {
+            put("title", title.trim())
+            put("content", content.trim())
+            put("updated_at", System.currentTimeMillis())
+        }
+        return writableDatabase.insertOrThrow("project_memory", null, values)
+    }
+
+    fun listMemories(): List<ProjectMemoryItem> {
+        val result = mutableListOf<ProjectMemoryItem>()
+        readableDatabase.query(
+            "project_memory", arrayOf("id", "title", "content", "updated_at"),
+            null, null, null, null, "updated_at DESC"
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                result += ProjectMemoryItem(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getLong(3))
+            }
+        }
+        return result
+    }
+
+    fun deleteMemory(id: Long) {
+        writableDatabase.delete("project_memory", "id = ?", arrayOf(id.toString()))
+    }
+
+    fun buildProjectContext(maxCharacters: Int = 5000): String =
+        listMemories().joinToString("\n") { "- ${it.title}: ${it.content}" }.take(maxCharacters)
     fun createMeeting(topic: String, participants: String, rounds: Int): Long {
         val values = ContentValues().apply {
             put("topic", topic)
@@ -119,6 +163,6 @@ class MeetingHistoryStore(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "tcon_meeting_history.db"
-        private const val DATABASE_VERSION = 1
+        private const val DATABASE_VERSION = 2
     }
 }
