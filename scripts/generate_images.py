@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "episode-01.json"
 OUT = ROOT / "public" / "images" / "episode-01"
 API = "https://aihorde.net/api/v2"
-API_KEY = os.getenv("AI_HORDE_API_KEY", "0000000000")
+API_KEY = os.getenv("AI_HORDE_API_KEY") or "0000000000"
 MAX_WAIT = int(os.getenv("AI_HORDE_MAX_WAIT_SECONDS", "2400"))
 
 
