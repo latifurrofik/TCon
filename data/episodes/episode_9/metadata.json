@@ -1,0 +1,51 @@
+{
+  "episode_number": 9,
+  "episode_id": "episode-01",
+  "series_id": "disetir-media-sosial",
+  "title": "Beli Karena Butuh atau FOMO?",
+  "title_alternatives": [],
+  "description": "Pernah membuka media sosial sebentar, tetapi tanpa sadar waktu berlalu begitu lama? Kenali bagaimana sistem rekomendasi dapat mengarahkan perhatian kita dan bagaimana mengambil keputusan dengan lebih sadar.",
+  "hashtags": [
+    "#MediaSosial",
+    "#Algoritma",
+    "#LiterasiDigital"
+  ],
+  "tags": [
+    "media sosial",
+    "algoritma",
+    "sistem rekomendasi",
+    "perhatian",
+    "literasi digital",
+    "YouTube Shorts Indonesia"
+  ],
+  "category": "Education",
+  "language": "id-ID",
+  "target_audience": "Penonton Indonesia",
+  "format": {
+    "platform": "YouTube Shorts",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "target_duration_seconds": 50
+  },
+  "status": "planned",
+  "thumbnail": {
+    "exists": false,
+    "status": "missing",
+    "path": null,
+    "sha256": null,
+    "file_size_bytes": null,
+    "dimensions": null,
+    "aspect_ratio": null,
+    "approved_at": null
+  },
+  "schedule": {
+    "publish_at": null,
+    "timezone": "Asia/Jakarta"
+  },
+  "sources": [],
+  "created_at": null,
+  "updated_at": null,
+  "notes": "Deskripsi dan metadata awal disalin/dirumuskan dari materi episode yang tersedia; lakukan pemeriksaan fakta dan persetujuan editorial sebelum publikasi.",
+  "episode": 9
+}
