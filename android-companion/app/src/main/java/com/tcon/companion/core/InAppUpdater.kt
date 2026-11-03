@@ -20,6 +20,7 @@ import java.security.MessageDigest
 
 data class TConUpdate(
     val version: String,
+    val versionCode: Long,
     val notes: String,
     val apkUrl: String,
     val apkName: String,
@@ -68,8 +69,14 @@ class InAppUpdater(private val context: Context) {
 
             val tag = release.optString("tag_name").removePrefix("v").trim()
             require(VERSION_PATTERN.matches(tag)) { "Tag versi rilis tidak valid." }
-            val current = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.0.0"
-            if (compareVersions(tag, current) <= 0) return@withContext null
+            val installed = context.packageManager.getPackageInfo(context.packageName, 0)
+            val currentName = installed.versionName ?: "0.0.0"
+            val candidateCode = versionCodeFor(tag)
+            val installedCode = if (android.os.Build.VERSION.SDK_INT >= 28) installed.longVersionCode else {
+                @Suppress("DEPRECATION")
+                installed.versionCode.toLong()
+            }
+            if (compareVersions(tag, currentName) <= 0 || candidateCode <= installedCode) return@withContext null
 
             val assets = release.optJSONArray("assets") ?: error("Rilis belum memiliki file APK.")
             var selected: JSONObject? = null
@@ -93,6 +100,7 @@ class InAppUpdater(private val context: Context) {
 
             TConUpdate(
                 version = tag,
+                versionCode = candidateCode,
                 notes = release.optString("body"),
                 apkUrl = asset.getString("browser_download_url"),
                 apkName = asset.getString("name"),
@@ -140,14 +148,24 @@ class InAppUpdater(private val context: Context) {
                     "Unduhan melewati batas 15 menit. Periksa koneksi lalu coba lagi."
                 }
                 val cursor = manager.query(DownloadManager.Query().setFilterById(downloadId))
-                val (status, reason) = cursor.use {
+                val row = cursor.use {
                     require(it.moveToFirst()) { "Unduhan tidak ditemukan." }
-                    it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) to
-                        it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                    DownloadStatus(
+                        status = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)),
+                        reason = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON)),
+                        downloaded = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR)),
+                        total = it.getLong(it.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES))
+                    )
                 }
-                when (status) {
+                require(row.downloaded <= update.expectedSize && row.downloaded <= MAX_APK_BYTES) {
+                    "Ukuran unduhan melewati batas yang diharapkan. Unduhan dihentikan."
+                }
+                require(row.total == -1L || row.total == update.expectedSize) {
+                    "Ukuran APK dari server tidak cocok dengan metadata rilis."
+                }
+                when (row.status) {
                     DownloadManager.STATUS_SUCCESSFUL -> break
-                    DownloadManager.STATUS_FAILED -> error("Unduhan gagal (kode $reason).")
+                    DownloadManager.STATUS_FAILED -> error("Unduhan gagal (kode ${row.reason}).")
                     // A paused DownloadManager task can resume automatically when network returns.
                     DownloadManager.STATUS_PAUSED -> Unit
                 }
@@ -162,6 +180,7 @@ class InAppUpdater(private val context: Context) {
             require(actualDigest == update.sha256) {
                 "Verifikasi SHA-256 gagal. APK tidak akan dipasang."
             }
+            verifyApkMetadata(apkFile, update)
             prefs.edit().remove(KEY_DOWNLOAD_ID).apply()
             installOrRequestPermission(activity, apkFile)
         } catch (error: Exception) {
@@ -208,6 +227,39 @@ class InAppUpdater(private val context: Context) {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         activity.startActivity(intent)
+    }
+
+    private data class DownloadStatus(
+        val status: Int,
+        val reason: Int,
+        val downloaded: Long,
+        val total: Long
+    )
+
+    private fun verifyApkMetadata(file: File, update: TConUpdate) {
+        val archive = context.packageManager.getPackageArchiveInfo(file.absolutePath, 0)
+            ?: error("File unduhan bukan APK Android yang valid.")
+        require(archive.packageName == context.packageName) {
+            "APK ditolak: application ID tidak cocok dengan TCon."
+        }
+        require(archive.versionName == update.version) {
+            "APK ditolak: versionName tidak cocok dengan metadata rilis."
+        }
+        val archiveCode = if (android.os.Build.VERSION.SDK_INT >= 28) archive.longVersionCode else {
+            @Suppress("DEPRECATION")
+            archive.versionCode.toLong()
+        }
+        require(archiveCode == update.versionCode) {
+            "APK ditolak: versionCode tidak cocok dengan versi rilis."
+        }
+    }
+
+    private fun versionCodeFor(version: String): Long {
+        val parts = version.split('.').map { it.toLongOrNull() ?: error("Versi rilis tidak valid.") }
+        require(parts.size == 3 && parts[0] <= 2147 && parts[1] <= 999 && parts[2] <= 999) {
+            "Versi rilis berada di luar rentang versionCode TCon."
+        }
+        return parts[0] * 1_000_000L + parts[1] * 1_000L + parts[2]
     }
 
     private fun sha256(file: File): String {
