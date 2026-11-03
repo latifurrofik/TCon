@@ -2,8 +2,8 @@ package com.tcon.companion.core
 
 data class ProviderCapabilities(
     val textInput: Boolean = true,
-    val imageInput: Boolean = false,
-    val fileInput: Boolean = false,
+    val imageInput: Boolean = true,
+    val fileInput: Boolean = true,
     val streaming: Boolean = false,
     val speechInput: Boolean = false,
     val speechOutput: Boolean = false
@@ -28,6 +28,7 @@ interface AiProvider {
     suspend fun respond(
         systemInstruction: String,
         conversation: List<AiMessage>,
-        maxResponseCharacters: Int
+        maxResponseCharacters: Int,
+        attachments: List<BinaryAttachment> = emptyList()
     ): Result<String>
 }
