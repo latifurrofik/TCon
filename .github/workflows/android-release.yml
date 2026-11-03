@@ -36,7 +36,7 @@ jobs:
           RELEASE_TAG: ${{ inputs.release_tag }}
         run: |
           set -euo pipefail
-          [[ "$VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          [[ "$VERSION_NAME" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]
           test "$RELEASE_TAG" = "v$VERSION_NAME"
           IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NAME"
           test "$MAJOR" -le 2147
