@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Generate one 9:16 scene image per episode scene with the Gemini image API.
+"""Generate episode scene art through the volunteer-powered AI Horde.
 
-Requires GEMINI_API_KEY. The API may incur charges; check current Google AI pricing
-and quotas before running. Generated assets are written to public/images/episode-01.
+Uses the public anonymous key by default: no paid API key or billing account.
+Anonymous jobs have the lowest queue priority and may take a long time.
 """
 import base64
 import json
 import os
+import re
 import time
 import urllib.error
 import urllib.request
@@ -15,71 +16,116 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data" / "episode-01.json"
 OUT = ROOT / "public" / "images" / "episode-01"
-MODEL = os.getenv("GEMINI_IMAGE_MODEL", "gemini-3.1-flash-image")
-ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/interactions"
+API = "https://aihorde.net/api/v2"
+API_KEY = os.getenv("AI_HORDE_API_KEY", "0000000000")
+MAX_WAIT = int(os.getenv("AI_HORDE_MAX_WAIT_SECONDS", "2400"))
 
 
-def request_image(api_key: str, prompt: str) -> bytes:
-    payload = {
-        "model": MODEL,
-        "input": prompt,
-        "response_format": {
-            "type": "image",
-            "mime_type": "image/jpeg",
-            "aspect_ratio": "9:16",
-            "image_size": "1K"
-        }
+def api_request(url, method="GET", payload=None):
+    headers = {
+        "apikey": API_KEY,
+        "Client-Agent": "TCon-Shorts:1.0:github.com/latifurrofik/TCon",
+        "Accept": "application/json",
     }
-    req = urllib.request.Request(
-        ENDPOINT,
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
-        method="POST"
-    )
+    data = None
+    if payload is not None:
+        headers["Content-Type"] = "application/json"
+        data = json.dumps(payload).encode("utf-8")
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=300) as response:
-            result = json.loads(response.read().decode("utf-8"))
+        with urllib.request.urlopen(req, timeout=90) as response:
+            raw = response.read()
+            content_type = response.headers.get("Content-Type", "")
+            if "application/json" in content_type or raw[:1] in (b"{", b"["):
+                return json.loads(raw.decode("utf-8"))
+            return raw
     except urllib.error.HTTPError as exc:
         detail = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"Gemini API HTTP {exc.code}: {detail[:1200]}") from exc
+        raise RuntimeError(f"AI Horde HTTP {exc.code}: {detail[:1000]}") from exc
 
-    # Interactions API returns generated image blocks in model_output steps.
-    for step in result.get("steps", []):
-        if step.get("type") == "model_output":
-            for block in step.get("content", []):
-                if block.get("type") == "image" and block.get("data"):
-                    return base64.b64decode(block["data"])
-    output_image = result.get("output_image")
-    if isinstance(output_image, dict) and output_image.get("data"):
-        return base64.b64decode(output_image["data"])
-    raise RuntimeError("Gemini response did not contain an image block: " + json.dumps(result)[:1200])
+
+def generate_image(prompt, target):
+    payload = {
+        "prompt": prompt,
+        "params": {
+            "width": 512,
+            "height": 896,
+            "steps": 20,
+            "n": 1,
+            "cfg_scale": 7,
+            "sampler_name": "k_euler",
+            "karras": True,
+        },
+        "nsfw": False,
+        "censor_nsfw": True,
+        "r2": True,
+        "replacement_filter": True,
+    }
+    submitted = api_request(f"{API}/generate/async", "POST", payload)
+    request_id = submitted.get("id")
+    if not request_id:
+        raise RuntimeError("AI Horde did not return a request ID: " + json.dumps(submitted)[:1000])
+    print(f"Queued AI Horde request {request_id}; initial queue position: {submitted.get('queue_position', 'unknown')}", flush=True)
+
+    deadline = time.time() + MAX_WAIT
+    while time.time() < deadline:
+        status = api_request(f"{API}/generate/check/{request_id}")
+        if status.get("faulted"):
+            raise RuntimeError("AI Horde generation faulted: " + json.dumps(status)[:1000])
+        if status.get("done"):
+            break
+        print(
+            f"Waiting for volunteer worker: queue={status.get('queue_position', '?')}, "
+            f"wait_estimate={status.get('wait_time', '?')}s",
+            flush=True,
+        )
+        time.sleep(10)
+    else:
+        raise TimeoutError(
+            f"AI Horde request {request_id} did not finish within {MAX_WAIT}s. "
+            "Re-run the workflow; already-created images will be retained."
+        )
+
+    result = api_request(f"{API}/generate/status/{request_id}")
+    generations = result.get("generations") or []
+    if not generations:
+        raise RuntimeError("AI Horde finished without an image: " + json.dumps(result)[:1000])
+    image_value = generations[0].get("img")
+    if not image_value:
+        raise RuntimeError("AI Horde result did not include image data.")
+    if image_value.startswith("http://") or image_value.startswith("https://"):
+        image_bytes = api_request(image_value)
+        if isinstance(image_bytes, dict):
+            raise RuntimeError("Expected image bytes but received JSON from image URL.")
+    else:
+        if image_value.startswith("data:") and "," in image_value:
+            image_value = image_value.split(",", 1)[1]
+        image_bytes = base64.b64decode(image_value)
+    if not image_bytes.startswith(b"RIFF") and not image_bytes.startswith(b"\x89PNG") and not image_bytes.startswith(b"\xff\xd8"):
+        raise RuntimeError("AI Horde returned an unrecognized image format.")
+    target.write_bytes(image_bytes)
+    print(f"Saved {target} ({len(image_bytes)} bytes)", flush=True)
 
 
 def main():
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise SystemExit("Missing GEMINI_API_KEY. Add it as a GitHub Actions repository secret.")
     episode = json.loads(DATA.read_text(encoding="utf-8"))
     OUT.mkdir(parents=True, exist_ok=True)
-
     for index, scene in enumerate(episode["scenes"], start=1):
-        target = OUT / f"scene-{index:02d}.jpg"
+        target = OUT / f"scene-{index:02d}.webp"
         if target.exists() and os.getenv("OVERWRITE_IMAGES", "false").lower() != "true":
-            print(f"SKIP existing {target}")
+            print(f"SKIP existing {target}", flush=True)
             continue
         prompt = (
             scene["visual_prompt"]
-            + " Maintain the same coherent visual language across this episode: "
-              "cinematic editorial 2D illustration, deep navy and charcoal palette, "
+            + " Cinematic editorial 2D illustration, dark navy and charcoal palette, "
               "restrained golden-yellow accents, dramatic soft lighting, clear focal subject, "
-              "clean composition. Portrait 9:16. No typography, captions, watermark, or logo."
+              "clean uncluttered composition, portrait 9:16. No text, letters, captions, "
+              "watermark, logo, collage, frame, or border."
         )
-        print(f"Generating scene {index}/{len(episode['scenes'])} with {MODEL}...")
-        image_bytes = request_image(api_key, prompt)
-        target.write_bytes(image_bytes)
-        print(f"Saved {target} ({len(image_bytes)} bytes)")
+        print(f"Generating scene {index}/{len(episode['scenes'])} with AI Horde (free community workers)...", flush=True)
+        generate_image(prompt, target)
         if index < len(episode["scenes"]):
-            time.sleep(2)
+            time.sleep(3)
 
 
 if __name__ == "__main__":
