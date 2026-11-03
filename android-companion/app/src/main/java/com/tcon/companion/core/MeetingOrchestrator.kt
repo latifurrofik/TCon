@@ -33,7 +33,7 @@ class MeetingOrchestrator(
                     append("Jangan mengaku sebagai AI lain. Jawab dalam Bahasa Indonesia.")
                 }
 
-                val result = provider.respond(
+                val result = provider.respondWithAttachments(
                     systemInstruction = instruction,
                     conversation = transcript.toList(),
                     maxResponseCharacters = config.maxResponseCharacters,
