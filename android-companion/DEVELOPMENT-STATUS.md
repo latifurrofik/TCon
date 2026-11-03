@@ -17,7 +17,7 @@
 - Indonesian push-to-talk speech recognition with runtime microphone permission.
 - Sequential TTS playback of provider responses; microphone is cancelled when the app goes to background.
 - Unit tests for orchestration order, transcript propagation, turn/length bounds, provider failure handling, and repeated participant rounds.
-- In-app updater code: checks latest stable GitHub Release, compares version tags, downloads a release APK through DownloadManager, and opens Android's package installer via FileProvider. User approval and Android's unknown-app installation permission remain required.
+- In-app updater: checks latest stable GitHub Release, validates semantic version and APK asset metadata, downloads via DownloadManager (150 MB cap / 15-minute timeout), verifies exact asset size and GitHub SHA-256 digest, then opens Android's package installer through FileProvider. User approval and Android's unknown-app installation permission remain required.
 - Manual signed-release workflow added. It builds/tests a signed APK and publishes it as a GitHub Release asset when release signing secrets are configured.
 
 ## Not implemented yet
