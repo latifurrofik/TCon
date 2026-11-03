@@ -15,7 +15,7 @@ object BinaryAttachmentReader {
     const val MAX_FILE_BYTES = 2 * 1024 * 1024
     const val MAX_TOTAL_BYTES = 5 * 1024 * 1024
 
-    private val supportedImageTypes = setOf("image/jpeg", "image/png", "image/webp", "image/gif")
+    private val supportedImageTypes = setOf("image/jpeg", "image/png", "image/webp")
 
     fun read(contentResolver: ContentResolver, uri: Uri): BinaryAttachment {
         val name = queryName(contentResolver, uri)
@@ -27,7 +27,6 @@ object BinaryAttachmentReader {
             extension in setOf("jpg", "jpeg") -> "image/jpeg"
             extension == "png" -> "image/png"
             extension == "webp" -> "image/webp"
-            extension == "gif" -> "image/gif"
             else -> error("Format $name belum didukung. Gunakan PDF, JPG, PNG, WEBP, atau GIF.")
         }
         val bytes = contentResolver.openInputStream(uri)?.use { stream ->
