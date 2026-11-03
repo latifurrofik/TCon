@@ -2,6 +2,7 @@ package com.tcon.companion.core
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -29,6 +30,7 @@ class ProviderApiClient(
 ) : AiProvider {
     override val capabilities = ProviderCapabilities(textInput = true, streaming = false)
 
+    @OptIn(InternalCoroutinesApi::class)
     override suspend fun respond(
         systemInstruction: String,
         conversation: List<AiMessage>,
@@ -46,7 +48,10 @@ class ProviderApiClient(
             headers.forEach { (name, value) -> setRequestProperty(name, value) }
         }
         // Disconnect the blocking HTTP request as soon as the coroutine is cancelled.
-        val cancellationHandle = currentCoroutineContext()[Job]?.invokeOnCompletion { cause ->
+        val cancellationHandle = currentCoroutineContext()[Job]?.invokeOnCompletion(
+            onCancelling = true,
+            invokeImmediately = true
+        ) { cause ->
             if (cause is CancellationException) connection.disconnect()
         }
         try {
