@@ -148,7 +148,8 @@ class InAppUpdater(private val context: Context) {
                 when (status) {
                     DownloadManager.STATUS_SUCCESSFUL -> break
                     DownloadManager.STATUS_FAILED -> error("Unduhan gagal (kode $reason).")
-                    DownloadManager.STATUS_PAUSED -> error("Unduhan dijeda (kode $reason). Coba lagi saat koneksi stabil.")
+                    // A paused DownloadManager task can resume automatically when network returns.
+                    DownloadManager.STATUS_PAUSED -> Unit
                 }
                 delay(700)
             }
@@ -180,8 +181,8 @@ class InAppUpdater(private val context: Context) {
             prefs.edit().remove(KEY_PENDING_INSTALL).apply()
             return
         }
-        prefs.edit().remove(KEY_PENDING_INSTALL).apply()
         launchInstaller(activity, file)
+        prefs.edit().remove(KEY_PENDING_INSTALL).apply()
     }
 
     private fun installOrRequestPermission(activity: Activity, apkFile: File) {
@@ -219,7 +220,7 @@ class InAppUpdater(private val context: Context) {
                 digest.update(buffer, 0, count)
             }
         }
-        return digest.digest().joinToString("") { "%02x".format(it) }
+        return digest.digest().joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
     }
 
     private fun compareVersions(left: String, right: String): Int {
