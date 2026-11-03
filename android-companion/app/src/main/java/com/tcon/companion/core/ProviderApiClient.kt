@@ -30,8 +30,14 @@ class ProviderApiClient(
 ) : AiProvider {
     override val capabilities = ProviderCapabilities(textInput = true, streaming = false)
 
-    @OptIn(InternalCoroutinesApi::class)
     override suspend fun respond(
+        systemInstruction: String,
+        conversation: List<AiMessage>,
+        maxResponseCharacters: Int
+    ): Result<String> = respondWithAttachments(systemInstruction, conversation, maxResponseCharacters, emptyList())
+
+    @OptIn(InternalCoroutinesApi::class)
+    override suspend fun respondWithAttachments(
         systemInstruction: String,
         conversation: List<AiMessage>,
         maxResponseCharacters: Int,
