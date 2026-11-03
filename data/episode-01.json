@@ -1,0 +1,44 @@
+{
+  "id": "episode-01",
+  "title": "Kamu Sadar Sedang Disetir?",
+  "language": "id-ID",
+  "voice": "id-ID-GadisNeural",
+  "format": {"width": 1080, "height": 1920, "fps": 30, "duration_seconds": 50},
+  "scenes": [
+    {
+      "start": 0, "end": 8,
+      "headline": "KAMU SADAR\nSEDANG DISETIR?",
+      "caption": "Bukan setir mobil. Tapi perhatianmu.",
+      "narration": "Pernah buka media sosial cuma untuk melihat sebentar, tapi tiba-tiba waktu sudah berlalu begitu lama? Bisa jadi perhatianmu sedang diarahkan.",
+      "visual_prompt": "Vertical 9:16 cinematic 2D editorial illustration, a lone Indonesian young adult seen from behind holding a glowing smartphone in a dark room, subtle yellow light from screen, deep navy and charcoal palette, dramatic composition, clean negative space, no text, no logos."
+    },
+    {
+      "start": 8, "end": 17,
+      "headline": "SATU APLIKASI",
+      "caption": "Awalnya cuma ingin melihat sebentar.",
+      "narration": "Awalnya hanya satu notifikasi. Lalu satu video muncul, disusul video berikutnya. Tanpa rencana, jempol terus bergerak.",
+      "visual_prompt": "Vertical 9:16 cinematic 2D editorial illustration, close-up of a hand holding smartphone with abstract notification shapes and a vertical video feed, no readable UI text, dark navy background, muted warm skin tones, yellow highlights, no logos."
+    },
+    {
+      "start": 17, "end": 27,
+      "headline": "WAKTU BERJALAN",
+      "caption": "Lima menit bisa berubah menjadi satu jam.",
+      "narration": "Platform digital memakai sistem rekomendasi untuk memilih konten yang kemungkinan menarik perhatianmu. Sistem itu belajar dari apa yang kamu tonton dan lakukan.",
+      "visual_prompt": "Vertical 9:16 cinematic 2D editorial illustration, surreal clock face dissolving into a stream of floating video cards around a smartphone, deep navy and black, yellow accent lighting, thoughtful non-conspiracy mood, no text, no logos."
+    },
+    {
+      "start": 27, "end": 39,
+      "headline": "FEED PUNYA POLA",
+      "caption": "Apa yang muncul dipilih oleh sistem rekomendasi.",
+      "narration": "Bukan berarti semua pilihanmu dikendalikan. Tetapi urutan konten yang kamu lihat dapat memengaruhi apa yang kamu pikirkan, rasakan, dan perhatikan.",
+      "visual_prompt": "Vertical 9:16 cinematic 2D editorial illustration, abstract recommendation network connecting a person silhouette to floating content cards, balanced visual metaphor, deep navy charcoal and restrained yellow, no text, no logos."
+    },
+    {
+      "start": 39, "end": 50,
+      "headline": "SIAPA PEGANG KENDALI?",
+      "caption": "Sadari polanya. Pilih dengan sadar.",
+      "narration": "Jadi, lain kali saat membuka feed, berhenti sejenak dan tanyakan: aku memang ingin melihat ini, atau hanya terus mengikuti rekomendasi? Kamu yang pegang kendali.",
+      "visual_prompt": "Vertical 9:16 cinematic 2D editorial illustration, confident person turning off smartphone and looking toward a warm yellow-lit open doorway, hopeful ending, deep navy palette, clean composition, no text, no logos."
+    }
+  ]
+}
