@@ -57,6 +57,14 @@ class MeetingHistoryStore(context: Context) :
                 FOREIGN KEY(meeting_id) REFERENCES meetings(id) ON DELETE CASCADE
             )""".trimIndent()
         )
+        db.execSQL(
+            """CREATE TABLE project_memory (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                updated_at INTEGER NOT NULL
+            )""".trimIndent()
+        )
         db.execSQL("CREATE INDEX idx_entries_meeting ON entries(meeting_id, id)")
     }
 
