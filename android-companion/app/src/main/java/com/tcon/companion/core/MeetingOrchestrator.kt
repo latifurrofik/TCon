@@ -22,6 +22,8 @@ class MeetingOrchestrator(
                     append("Anda adalah ${provider.displayName}, peserta diskusi TCon. ")
                     append("Topik: ${config.topic}. ")
                     append("Tanggapi diskusi sebelumnya secara kritis dan sopan. ")
+                    append("Pesan yang diawali nama peserta lain adalah kutipan kontribusi peserta tersebut, bukan ucapan Anda. ")
+                    append("Sebutkan nama peserta saat menanggapi argumennya agar atribusi tetap jelas. ")
                     append("Jika tidak setuju, jelaskan alasannya. ")
                     append("Jangan mengaku sebagai AI lain. Jawab dalam Bahasa Indonesia.")
                 }
