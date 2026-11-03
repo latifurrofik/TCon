@@ -31,6 +31,7 @@ import com.tcon.companion.core.ApiKeyVault
 import com.tcon.companion.core.MeetingConfig
 import com.tcon.companion.core.MeetingOrchestrator
 import com.tcon.companion.core.MeetingHistoryStore
+import com.tcon.companion.core.OfficeDocumentReader
 import com.tcon.companion.core.MessageRole
 import com.tcon.companion.core.ProviderApiClient
 import com.tcon.companion.core.ProviderId
@@ -124,7 +125,7 @@ class MainActivity : Activity() {
         addButton(root, "Bagikan instruksi ke aplikasi AI") { sharePrompt() }
         addButton(root, "Lampirkan file, PDF, atau gambar") { openDocumentPicker() }
         attachmentStatusView = TextView(this).apply {
-            text = "TXT/CSV/JSON/MD, PDF, JPG, PNG, atau WebP. Maksimal 5 file."
+            text = "TXT/CSV/JSON/MD, DOCX/XLSX, PDF, JPG, PNG, atau WebP. Maksimal 5 file."
             textSize = 12f
             setPadding(0, 4, 0, 8)
         }
@@ -186,6 +187,8 @@ class MainActivity : Activity() {
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
                 "text/*", "application/json", "application/xml", "application/pdf",
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "application/*+json", "application/*+xml", "image/jpeg", "image/png", "image/webp"
             ))
         }
@@ -217,7 +220,11 @@ class MainActivity : Activity() {
                 uris.take(availableSlots).map { uri ->
                     val textResult = runCatching { TextAttachmentReader.read(contentResolver, uri) }
                     if (textResult.isSuccess) Result.success<Any>(textResult.getOrThrow())
-                    else runCatching { BinaryAttachmentReader.read(contentResolver, uri) }.map { it as Any }
+                    else {
+                        val officeResult = runCatching { OfficeDocumentReader.read(contentResolver, uri) }
+                        if (officeResult.isSuccess) Result.success<Any>(officeResult.getOrThrow())
+                        else runCatching { BinaryAttachmentReader.read(contentResolver, uri) }.map { it as Any }
+                    }
                 }
             }
             var added = 0
