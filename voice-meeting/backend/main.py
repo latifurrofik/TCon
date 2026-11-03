@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.7-flash")
 ALLOWED_ORIGINS = [
     item.strip()
     for item in os.getenv("ALLOWED_ORIGINS", "http://localhost:8000").split(",")
@@ -69,7 +69,7 @@ async def ask_openai(request: ChatRequest) -> str:
     )
     messages.append({
         "role": "user",
-        "content": f"Topik diskusi: {request.topic}\\n\\n{request.prompt}",
+        "content": f"Topik diskusi: {request.topic}\n\n{request.prompt}",
     })
     payload = {
         "model": OPENAI_MODEL,
