@@ -56,7 +56,7 @@ jobs:
           expected = [folder / f'scene-{i:02d}.webp' for i in range(1, 6)]
           ready = all(path.is_file() and path.stat().st_size > 0 for path in expected)
           with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
-              output.write(f'use_generated_assets={str(ready).lower()}\\n')
+              output.write(f'use_generated_assets={str(ready).lower()}\n')
           print('Visual mode: ' + ('generated-assets' if ready else 'built-in-motion-graphics'))
           if not ready:
               print('AI images unavailable or incomplete; using Remotion motion graphics.')
