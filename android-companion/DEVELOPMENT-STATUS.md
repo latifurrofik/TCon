@@ -6,13 +6,13 @@
 - Provider-neutral models and bounded sequential meeting orchestrator.
 - Optional OpenAI Responses, Gemini generateContent, and Anthropic Messages API adapter.
 - AES-GCM API-key vault backed by Android Keystore.
-- Basic UI for entering provider model IDs/API keys, starting a confirmed discussion, viewing transcript, and stopping the discussion.
+- Basic UI for entering provider model IDs/API keys, selecting configured meeting participants, choosing 1–5 discussion rounds, confirming API cost, viewing transcript, and stopping the discussion.
 - Provider-specific conversation roles: each AI sees its own earlier messages as assistant turns and peer AI contributions as attributed user context; adjacent same-role turns are coalesced for API compatibility.
 - HTTP request cancellation wired to coroutine cancellation; stopping a meeting disconnects the active provider request.
 - Android app backup disabled so encrypted API-key ciphertext is not restored without its device-bound Keystore key.
 - Indonesian push-to-talk speech recognition with runtime microphone permission.
 - Sequential TTS playback of provider responses; microphone is cancelled when the app goes to background.
-- Unit tests for orchestration order, transcript propagation, turn/length bounds, and provider failure handling.
+- Unit tests for orchestration order, transcript propagation, turn/length bounds, provider failure handling, and repeated participant rounds.
 
 ## Not implemented yet
 - Build/test validation on GitHub Actions or a physical Android device.
