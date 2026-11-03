@@ -4,16 +4,29 @@
   const voiceA = $("voiceA");
   const voiceB = $("voiceB");
   const transcript = $("transcript");
-  const status = $("status");
   const start = $("start");
   const pause = $("pause");
   const stop = $("stop");
-  const turnCount = $("turn-count");
+  const apiStatus = $("api-status");
+  const apiBaseInput = $("apiBase");
+  const checkApi = $("checkApi");
   let voices = [];
-  let queue = [];
-  let index = 0;
-  let paused = false;
   let active = false;
+  let paused = false;
+  let runId = 0;
+  let currentUtterance = null;
+  let turn = 0;
+  let configured = {openai:false, gemini:false};
+
+  function baseUrl() {
+    return apiBaseInput.value.trim().replace(/\/$/, "") || window.location.origin;
+  }
+
+  function setStatus(label, running = false) {
+    $("status").innerHTML = "<i></i> " + label;
+    $("status").style.borderColor = running ? "#385747" : "";
+    $("status").style.color = running ? "#a9e8c9" : "";
+  }
 
   function loadVoices() {
     voices = synth ? synth.getVoices() : [];
@@ -26,13 +39,13 @@
         select.add(new Option("Suara browser tidak tersedia", ""));
         return;
       }
-      options.forEach((voice, i) => select.add(new Option(voice.name + " · " + voice.lang, voice.name)));
+      options.forEach(voice => select.add(new Option(voice.name + " · " + voice.lang, voice.name)));
       const preferred = slot === 0 ? options[0] : (options.find(v => v.name !== options[0].name) || options[0]);
       select.value = options.some(v => v.name === previous) ? previous : preferred.name;
     });
     $("voice-note").textContent = idVoices.length
-      ? idVoices.length + " suara Bahasa Indonesia terdeteksi. Pilih dua suara yang berbeda bila tersedia."
-      : "Suara Bahasa Indonesia belum terdeteksi. Tambahkan/unduh suara Indonesia di pengaturan Android atau gunakan suara browser yang tersedia.";
+      ? idVoices.length + " suara Bahasa Indonesia terdeteksi. Pilih dua suara berbeda jika tersedia."
+      : "Suara Bahasa Indonesia belum terdeteksi. Atur suara TTS di Android atau gunakan suara browser yang tersedia.";
   }
 
   function addMessage(speaker, cls, text) {
@@ -46,108 +59,191 @@
     body.textContent = text;
     article.append(name, body);
     transcript.append(article);
-    turnCount.textContent = (index + 1) + " giliran";
-    article.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    turn += 1;
+    $("turn-count").textContent = turn + " giliran";
+    article.scrollIntoView({behavior:"smooth", block:"nearest"});
   }
 
-  function setStatus(label, running = false) {
-    status.innerHTML = "<i></i> " + label;
-    status.style.borderColor = running ? "#385747" : "";
-    status.style.color = running ? "#a9e8c9" : "";
+  async function requestJson(path, options = {}) {
+    const response = await fetch(baseUrl() + path, {
+      ...options,
+      headers: {"Content-Type":"application/json", ...(options.headers || {})}
+    });
+    let data = {};
+    try { data = await response.json(); } catch (_) {}
+    if (!response.ok) throw new Error(data.detail || ("HTTP " + response.status));
+    return data;
   }
 
-  function buildDemo(topic) {
-    return [
-      { speaker:"MODERATOR", cls:"speaker-moderator", text:"Kita mulai diskusi. Topik hari ini: " + topic + " Saya akan meminta setiap peserta menyampaikan pandangan secara bergantian." },
-      { speaker:"CHATGPT · PESERTA A", cls:"speaker-a", text:"Menurut saya, kecerdasan buatan lebih tepat dilihat sebagai alat yang mengubah cara kerja. Beberapa tugas rutin bisa otomatis, tetapi pekerjaan yang membutuhkan empati, tanggung jawab, dan penilaian manusia tetap penting." },
-      { speaker:"GEMINI · PESERTA B", cls:"speaker-b", text:"Saya setuju sebagian, tetapi dampaknya bisa lebih luas. Bukan hanya tugas rutin; profesi yang pekerjaannya banyak berbasis informasi juga akan berubah. Karena itu, adaptasi keterampilan perlu dimulai sekarang." },
-      { speaker:"MODERATOR", cls:"speaker-moderator", text:"Menarik. ChatGPT, bagaimana tanggapanmu terhadap kemungkinan perubahan pada pekerjaan berbasis informasi?" },
-      { speaker:"CHATGPT · PESERTA A", cls:"speaker-a", text:"Perubahan itu nyata, tetapi tidak selalu berarti seluruh profesi hilang. Banyak pekerjaan akan dipecah menjadi tugas yang dikerjakan bersama AI dan tugas yang tetap membutuhkan manusia." },
-      { speaker:"GEMINI · PESERTA B", cls:"speaker-b", text:"Saya ingin menambahkan bahwa manfaatnya tidak otomatis merata. Pendidikan, akses teknologi, dan kebijakan perusahaan akan menentukan siapa yang paling siap menghadapi perubahan." },
-      { speaker:"MODERATOR", cls:"speaker-moderator", text:"Baik. Demo fondasi selesai. Pada tahap berikutnya, kalimat contoh ini akan diganti dengan respons langsung dari API AI." }
-    ];
-  }
-
-  function speakNext() {
-    if (!active || paused) return;
-    if (index >= queue.length) {
-      active = false;
-      setStatus("Demo selesai");
-      start.disabled = false;
-      pause.disabled = true;
-      stop.disabled = true;
-      pause.textContent = "Ⅱ Jeda";
-      return;
+  async function checkConnection() {
+    checkApi.disabled = true;
+    apiStatus.textContent = "Memeriksa…";
+    try {
+      const data = await requestJson("/api/health");
+      configured = {
+        openai: !!data.providers?.openai?.configured,
+        gemini: !!data.providers?.gemini?.configured
+      };
+      const a = configured.openai ? "ChatGPT siap" : "ChatGPT belum diatur";
+      const b = configured.gemini ? "Gemini siap" : "Gemini belum diatur";
+      apiStatus.textContent = a + " · " + b;
+      apiStatus.style.color = configured.openai && configured.gemini ? "#63d6aa" : "#f0c77b";
+      if (configured.openai && configured.gemini) {
+        setStatus("Kedua AI terhubung");
+      } else {
+        setStatus("API belum lengkap");
+      }
+      return configured.openai && configured.gemini;
+    } catch (error) {
+      apiStatus.textContent = "Backend tidak terjangkau";
+      apiStatus.style.color = "#ff9aa8";
+      setStatus("Backend belum terhubung");
+      $("voice-note").textContent = error.message + ". Pastikan backend aktif dan alamatnya benar.";
+      return false;
+    } finally {
+      checkApi.disabled = false;
     }
-    const item = queue[index];
-    addMessage(item.speaker, item.cls, item.text);
-    const utterance = new SpeechSynthesisUtterance(item.text);
-    utterance.lang = "id-ID";
-    const selectedName = item.cls === "speaker-b" ? voiceB.value : voiceA.value;
-    const selected = voices.find(v => v.name === selectedName);
-    if (selected) {
-      utterance.voice = selected;
-      utterance.lang = selected.lang;
-    }
-    utterance.rate = 0.96;
-    utterance.pitch = item.cls === "speaker-b" ? 1.08 : 0.96;
-    utterance.onend = () => {
-      index += 1;
-      if (active && !paused) window.setTimeout(speakNext, 650);
-    };
-    utterance.onerror = () => {
-      index += 1;
-      if (active && !paused) window.setTimeout(speakNext, 300);
-    };
-    synth.speak(utterance);
   }
 
-  start.addEventListener("click", () => {
+  function waitIfPaused(id) {
+    return new Promise(resolve => {
+      const poll = () => {
+        if (id !== runId || !active) return resolve(false);
+        if (!paused) return resolve(true);
+        window.setTimeout(poll, 150);
+      };
+      poll();
+    });
+  }
+
+  async function speak(text, speaker, id) {
+    if (!synth) return;
+    const canContinue = await waitIfPaused(id);
+    if (!canContinue) throw new Error("Diskusi dihentikan.");
+    return new Promise((resolve, reject) => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      currentUtterance = utterance;
+      const isGemini = speaker === "gemini";
+      const selectedName = isGemini ? voiceB.value : voiceA.value;
+      const selected = voices.find(v => v.name === selectedName);
+      utterance.lang = selected?.lang || "id-ID";
+      if (selected) utterance.voice = selected;
+      utterance.rate = 0.96;
+      utterance.pitch = isGemini ? 1.08 : 0.96;
+      utterance.onend = () => { currentUtterance = null; resolve(); };
+      utterance.onerror = event => {
+        currentUtterance = null;
+        if (event.error === "canceled" || event.error === "interrupted") reject(new Error("Audio dihentikan."));
+        else resolve();
+      };
+      synth.speak(utterance);
+      if (paused) synth.pause();
+    });
+  }
+
+  async function ask(provider, topic, prompt, history) {
+    const path = provider === "openai" ? "/api/chat/openai" : "/api/chat/gemini";
+    return requestJson(path, {
+      method:"POST",
+      body:JSON.stringify({topic, prompt, history})
+    });
+  }
+
+  async function runMeeting(id) {
+    const topic = $("topic").value.trim();
+    const moderatorOpening = "Kita mulai diskusi dengan topik: " + topic + ". ChatGPT, silakan sampaikan pandangan pembuka. Setelah itu Gemini akan menanggapi.";
+    addMessage("MODERATOR", "speaker-moderator", moderatorOpening);
+    await speak(moderatorOpening, "openai", id);
+
+    setStatus("ChatGPT sedang berpikir", true);
+    const first = await ask("openai", topic, "Sampaikan pandangan pembuka sebagai peserta diskusi. Maksimal tiga paragraf pendek.", []);
+    if (id !== runId || !active) return;
+    addMessage("CHATGPT · PESERTA A", "speaker-a", first.text);
+    await speak(first.text, "openai", id);
+
+    setStatus("Gemini sedang menanggapi", true);
+    const second = await ask("gemini", topic, "Tanggapi pandangan ChatGPT berikut. Setujui atau sanggah dengan alasan, lalu tambahkan sudut pandang baru.\n\nPandangan ChatGPT: " + first.text, [
+      {role:"user", content:"Sampaikan pandangan pembuka tentang topik: " + topic},
+      {role:"assistant", content:first.text}
+    ]);
+    if (id !== runId || !active) return;
+    addMessage("GEMINI · PESERTA B", "speaker-b", second.text);
+    await speak(second.text, "gemini", id);
+
+    const closing = "Terima kasih. Tahap integrasi API berhasil: ChatGPT telah membuka diskusi dan Gemini telah menanggapi. Moderator otomatis dan putaran tanpa batas akan dibuat pada tahap berikutnya.";
+    addMessage("MODERATOR", "speaker-moderator", closing);
+    await speak(closing, "openai", id);
+    if (id !== runId || !active) return;
+    active = false;
+    setStatus("Satu putaran selesai");
+    start.disabled = false;
+    pause.disabled = true;
+    stop.disabled = true;
+  }
+
+  start.addEventListener("click", async () => {
     if (!synth) {
       setStatus("TTS tidak didukung");
-      $("voice-note").textContent = "Browser ini tidak mendukung Speech Synthesis. Coba Chrome Android.";
+      return;
+    }
+    const topic = $("topic").value.trim();
+    if (!topic) { $("topic").focus(); return; }
+    start.disabled = true;
+    checkApi.disabled = true;
+    setStatus("Memeriksa API…");
+    const ready = await checkConnection();
+    checkApi.disabled = false;
+    if (!ready) {
+      start.disabled = false;
+      $("voice-note").textContent = "Atur kedua API key di environment server terlebih dahulu. Tidak perlu memasukkan key di halaman ini.";
       return;
     }
     synth.cancel();
-    const topic = $("topic").value.trim();
-    if (!topic) {
-      $("topic").focus();
-      return;
-    }
-    queue = buildDemo(topic);
-    index = 0;
-    paused = false;
+    runId += 1;
+    const id = runId;
     active = true;
+    paused = false;
+    turn = 0;
     transcript.innerHTML = "";
-    turnCount.textContent = "0 giliran";
-    start.disabled = true;
+    $("turn-count").textContent = "0 giliran";
     pause.disabled = false;
     stop.disabled = false;
     pause.textContent = "Ⅱ Jeda";
-    setStatus("Demo berjalan", true);
-    speakNext();
+    try {
+      await runMeeting(id);
+    } catch (error) {
+      if (id === runId) {
+        active = false;
+        synth.cancel();
+        setStatus("Terjadi kendala");
+        addMessage("SISTEM", "speaker-moderator", error.message);
+        start.disabled = false;
+        pause.disabled = true;
+        stop.disabled = true;
+      }
+    }
   });
 
   pause.addEventListener("click", () => {
     if (!active) return;
+    paused = !paused;
     if (paused) {
-      paused = false;
-      synth.resume();
-      pause.textContent = "Ⅱ Jeda";
-      setStatus("Demo berjalan", true);
-    } else {
-      paused = true;
       synth.pause();
       pause.textContent = "▶ Lanjutkan";
       setStatus("Dijeda");
+    } else {
+      synth.resume();
+      pause.textContent = "Ⅱ Jeda";
+      setStatus("Diskusi berjalan", true);
     }
   });
 
   stop.addEventListener("click", () => {
-    if (synth) synth.cancel();
+    runId += 1;
     active = false;
     paused = false;
-    queue = [];
+    if (synth) synth.cancel();
+    currentUtterance = null;
     start.disabled = false;
     pause.disabled = true;
     stop.disabled = true;
@@ -155,6 +251,7 @@
     setStatus("Dihentikan");
   });
 
+  checkApi.addEventListener("click", checkConnection);
   if (synth) {
     loadVoices();
     synth.onvoiceschanged = loadVoices;
