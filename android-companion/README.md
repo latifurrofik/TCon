@@ -13,7 +13,7 @@ TCon is an Android-first workspace for collaboration between ChatGPT (OpenAI), G
 - Local SQLite history records meeting topics and transcript entries, with a viewer for the latest 50 meetings.
 - Editable local project memory notes can be added and deleted; up to 5,000 characters of saved notes are passed as reference context to each AI in a new meeting.
 - A local task board supports creating, editing, deleting, and tracking tasks through three statuses; open tasks are passed as reference context to new AI meetings.
-- Users can attach up to five small text documents (TXT, Markdown, CSV/TSV, JSON, XML, HTML, YAML, LOG; 512 KB each). Their extracted UTF-8 text is included as reference context for all selected AI participants.
+- Users can attach up to five text or binary files per meeting. Text formats (TXT, Markdown, CSV/TSV, JSON, XML, HTML, YAML, LOG) are limited to 512 KB each and 12,000 context characters total. PDF and image attachments (JPEG, PNG, WebP) are sent as native multimodal inputs to OpenAI Responses, Gemini generateContent, and Anthropic Messages; each binary file is limited to 2 MB and all binary attachments together to 5 MB. Each selected provider receives the binary files on its first turn only.
 - Unit tests for orchestration order, transcript propagation, turn/length bounds, and provider failure handling.
 - Indonesian push-to-talk speech recognition using the Android speech service.
 - Sequential AI response playback through Android TextToSpeech, with pitch differences to distinguish speakers.
@@ -28,7 +28,7 @@ Requirements: JDK 17, Android SDK Platform 35, Android 8.0 (API 26) or newer.
 - Model IDs are entered by the user because model availability and names can change.
 - App handoff does not read replies from ChatGPT, Gemini, or Claude consumer apps. Automatic discussion uses the optional official API adapters.
 - Voice is currently push-to-talk and sequential TTS, not continuous full-duplex or hands-free conversation. Distinct AI speakers currently use pitch differences, not guaranteed separate natural voices.
-- PDF, DOCX, XLSX, images, audio, and video are not supported by the current attachment reader. Attachments are text-only, limited in size, and held temporarily in memory for the current app session; original files are not uploaded as binary files.
+- DOCX, XLSX, audio, and video are not supported yet. PDF and JPEG/PNG/WebP files are held temporarily in memory and sent as base64 request content to the selected provider APIs; files are not stored in meeting history or retained after the app session. Provider API pricing and model modality support still apply.
 - Streaming, automatic memory extraction/summarization, task automation, and in-app updates are not implemented yet. Meeting history and manually managed project notes are stored locally on the device.
 - The Claude app package ID is configured as `com.anthropic.claude`; verify on the target phone.
 
