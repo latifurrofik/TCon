@@ -84,8 +84,8 @@
         openai: !!data.providers?.openai?.configured,
         gemini: !!data.providers?.gemini?.configured
       };
-      const a = configured.openai ? "ChatGPT siap" : "ChatGPT belum diatur";
-      const b = configured.gemini ? "Gemini siap" : "Gemini belum diatur";
+      const a = configured.openai ? "ChatGPT API key tersedia" : "ChatGPT API key belum diatur";
+      const b = configured.gemini ? "Gemini API key tersedia" : "Gemini API key belum diatur";
       apiStatus.textContent = a + " · " + b;
       apiStatus.style.color = configured.openai && configured.gemini ? "#63d6aa" : "#f0c77b";
       if (configured.openai && configured.gemini) {
