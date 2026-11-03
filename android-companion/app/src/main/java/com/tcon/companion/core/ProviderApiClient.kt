@@ -34,11 +34,12 @@ class ProviderApiClient(
     override suspend fun respond(
         systemInstruction: String,
         conversation: List<AiMessage>,
-        maxResponseCharacters: Int
+        maxResponseCharacters: Int,
+        attachments: List<BinaryAttachment>
     ): Result<String> = withContext(Dispatchers.IO) {
         val secret = apiKey()?.takeIf { it.isNotBlank() }
             ?: return@withContext Result.failure(IllegalStateException("API key untuk $displayName belum disimpan."))
-        val (endpoint, body, headers) = requestFor(secret, systemInstruction, conversation)
+        val (endpoint, body, headers) = requestFor(secret, systemInstruction, conversation, attachments)
         val connection = (URL(endpoint).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
             connectTimeout = 20_000
@@ -91,7 +92,8 @@ class ProviderApiClient(
     private fun requestFor(
         secret: String,
         systemInstruction: String,
-        conversation: List<AiMessage>
+        conversation: List<AiMessage>,
+        attachments: List<BinaryAttachment>
     ): Triple<String, JSONObject, Map<String, String>> {
         // Each provider must see its own earlier turns as assistant messages,
         // while peer-AI contributions are presented as attributed user context.
@@ -118,8 +120,20 @@ class ProviderApiClient(
         return when (id) {
             ProviderId.OPENAI -> {
                 val input = JSONArray()
-                groupedTurns.forEach { (role, text) ->
-                    input.put(JSONObject().put("role", role).put("content", text))
+                val lastUserIndex = groupedTurns.indexOfLast { it.first == "user" }
+                groupedTurns.forEachIndexed { index, (role, text) ->
+                    if (index == lastUserIndex && attachments.isNotEmpty()) {
+                        val parts = JSONArray().put(JSONObject().put("type", "input_text").put("text", text))
+                        attachments.forEach { attachment ->
+                            val dataUrl = "data:${attachment.mimeType};base64,${attachment.base64Data}"
+                            if (attachment.mimeType.startsWith("image/")) {
+                                parts.put(JSONObject().put("type", "input_image").put("image_url", dataUrl))
+                            } else if (attachment.mimeType == "application/pdf") {
+                                parts.put(JSONObject().put("type", "input_file").put("filename", attachment.name).put("file_data", dataUrl))
+                            }
+                        }
+                        input.put(JSONObject().put("role", role).put("content", parts))
+                    } else input.put(JSONObject().put("role", role).put("content", text))
                 }
                 Triple(
                     "https://api.openai.com/v1/responses",
@@ -129,10 +143,14 @@ class ProviderApiClient(
             }
             ProviderId.GEMINI -> {
                 val contents = JSONArray()
-                groupedTurns.forEach { (role, text) ->
-                    contents.put(JSONObject()
-                        .put("role", role)
-                        .put("parts", JSONArray().put(JSONObject().put("text", text))))
+                val lastUserIndex = groupedTurns.indexOfLast { it.first == "user" }
+                groupedTurns.forEachIndexed { index, (role, text) ->
+                    val parts = JSONArray().put(JSONObject().put("text", text))
+                    if (index == lastUserIndex) attachments.forEach { attachment ->
+                        parts.put(JSONObject().put("inlineData", JSONObject()
+                            .put("mimeType", attachment.mimeType).put("data", attachment.base64Data)))
+                    }
+                    contents.put(JSONObject().put("role", role).put("parts", parts))
                 }
                 Triple(
                     "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent",
@@ -144,8 +162,20 @@ class ProviderApiClient(
             }
             ProviderId.CLAUDE -> {
                 val messages = JSONArray()
-                groupedTurns.forEach { (role, text) ->
-                    messages.put(JSONObject().put("role", role).put("content", text))
+                val lastUserIndex = groupedTurns.indexOfLast { it.first == "user" }
+                groupedTurns.forEachIndexed { index, (role, text) ->
+                    if (index == lastUserIndex && attachments.isNotEmpty()) {
+                        val blocks = JSONArray().put(JSONObject().put("type", "text").put("text", text))
+                        attachments.forEach { attachment ->
+                            val source = JSONObject().put("type", "base64").put("media_type", attachment.mimeType).put("data", attachment.base64Data)
+                            if (attachment.mimeType.startsWith("image/")) {
+                                blocks.put(JSONObject().put("type", "image").put("source", source))
+                            } else if (attachment.mimeType == "application/pdf") {
+                                blocks.put(JSONObject().put("type", "document").put("title", attachment.name).put("source", source))
+                            }
+                        }
+                        messages.put(JSONObject().put("role", role).put("content", blocks))
+                    } else messages.put(JSONObject().put("role", role).put("content", text))
                 }
                 Triple(
                     "https://api.anthropic.com/v1/messages",
