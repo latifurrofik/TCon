@@ -38,7 +38,7 @@ Requirements: JDK 17, Android SDK Platform 35, Android 8.0 (API 26) or newer.
 
 The home screen's **Periksa pembaruan TCon** button checks:
 `https://api.github.com/repos/latifurrofik/TCon/releases/latest`.
-Only stable, non-draft GitHub Releases are considered. The release tag (for example `v0.1.1`) is compared with the installed `versionName`. The release must include an APK asset with a GitHub-provided SHA-256 digest and a size no larger than 150 MB. The user confirms the download, Android DownloadManager downloads it, and Android's package installer handles the final installation. If Android requests permission to install unknown apps, enable it for TCon in system settings and return to TCon.
+Only stable, non-draft GitHub Releases are considered. The release tag (for example `v0.1.1`) is compared with the installed `versionName` and a deterministic Android `versionCode` derived from the semantic version (`major × 1,000,000 + minor × 1,000 + patch`). The downloaded APK's package ID, version name, and version code are checked before Android's installer is opened. The release must include an APK asset with a GitHub-provided SHA-256 digest and a size no larger than 150 MB. The user confirms the download, Android DownloadManager downloads it, and Android's package installer handles the final installation. If Android requests permission to install unknown apps, enable it for TCon in system settings and return to TCon.
 
 A signed-release workflow is available at `.github/workflows/android-release.yml` and is **manual only**. Before using it, configure these GitHub Actions Secrets:
 - `TCON_RELEASE_KEYSTORE_BASE64`: Base64 content of the permanent JKS keystore.
@@ -46,7 +46,7 @@ A signed-release workflow is available at `.github/workflows/android-release.yml
 - `TCON_RELEASE_KEY_ALIAS`: key alias.
 - `TCON_RELEASE_KEY_PASSWORD`: key password.
 
-Create and back up the permanent signing keystore securely. Never commit it or paste it into chat. The release workflow accepts `version_name`, an increasing integer `version_code`, a matching tag such as `v0.1.1`, and optional release notes. It runs tests, builds the signed APK, and publishes the APK as a GitHub Release asset. Do not run the release workflow until the signing secrets are configured and the release has been reviewed.
+Create and back up the permanent signing keystore securely. Never commit it or paste it into chat. The release workflow accepts `version_name` (for example `0.1.1`), a matching tag (`v0.1.1`), and optional release notes. It derives a monotonically increasing Android `versionCode`, refuses to reuse an existing tag, runs unit tests, builds the signed APK, and publishes it as a GitHub Release asset. Do not run the release workflow until the signing secrets are configured, the permanent key is backed up, and the release has been reviewed.
 
 **Important:** install the first production build from a signed GitHub Release. A locally installed debug APK will normally have a different signing key and cannot be upgraded in place by the production-signed APK. Every production release must use the same permanent JKS key and a higher `version_code`.
 
