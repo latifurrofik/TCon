@@ -41,6 +41,7 @@ class InAppUpdater(private val context: Context) {
         private const val FILE_PROVIDER_AUTHORITY = "com.tcon.companion.fileprovider"
         private const val MAX_APK_BYTES = 150L * 1024L * 1024L
         private const val DOWNLOAD_TIMEOUT_MS = 15L * 60L * 1000L
+        private val VERSION_PATTERN = Regex("\\d+\\.\\d+\\.\\d+")
     }
 
     suspend fun checkLatest(): TConUpdate? = withContext(Dispatchers.IO) {
@@ -231,7 +232,4 @@ class InAppUpdater(private val context: Context) {
         return 0
     }
 
-    private companion object VersionRules {
-        val VERSION_PATTERN = Regex("\\d+\\.\\d+\\.\\d+")
-    }
 }
