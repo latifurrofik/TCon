@@ -5,8 +5,9 @@ Fondasi produksi YouTube Shorts TCon melalui GitHub Actions, tanpa perlu PC loka
 ## Spesifikasi
 - 1080 × 1920, portrait 9:16, 30 FPS
 - Durasi episode contoh: 50 detik
-- Ilustrasi AI melalui AI Horde (komputasi sukarela komunitas; tanpa biaya API)
+- Visual utama: komposisi motion graphics Remotion; ilustrasi AI Horde opsional
 - Narasi Bahasa Indonesia melalui Edge TTS
+- Subtitle bertiming dari word boundaries
 - Render MP4 melalui Remotion di GitHub Actions
 - Hasil berupa artifact untuk ditinjau manual
 
@@ -14,13 +15,16 @@ Fondasi produksi YouTube Shorts TCon melalui GitHub Actions, tanpa perlu PC loka
 1. Buka tab **Actions** di repository GitHub.
 2. Pilih **TCon cloud Shorts production**.
 3. Tekan **Run workflow**.
-4. Biarkan **Regenerate existing scene images** tidak dicentang untuk mempertahankan gambar yang sudah jadi.
-5. Setelah selesai, unduh artifact **tcon-episode-01-preview**.
+4. Untuk percobaan paling stabil, biarkan **Try free AI Horde scene images** tidak dicentang. Video memakai visual motion graphics bawaan Remotion.
+5. Jika ingin mencoba ilustrasi AI Horde, centang opsi tersebut. Jika layanan gagal atau gambar tidak lengkap, workflow otomatis kembali ke visual motion graphics.
+6. Setelah selesai, unduh artifact **tcon-episode-01-preview**.
 
 ## Biaya dan batasan
-Generator gambar memakai AI Horde, jaringan volunteer yang dapat digunakan gratis bahkan tanpa akun. Workflow memakai anonymous key secara default; anonymous request mendapat prioritas antrean terendah. Waktu tunggu tidak dijamin, ketersediaan worker berubah-ubah, dan request dapat timeout. Jika ingin prioritas lebih tinggi, buat akun AI Horde dan simpan API key sebagai GitHub Actions secret `AI_HORDE_API_KEY`. Jangan masukkan key ke source code.
+AI Horde adalah layanan komunitas gratis dengan antrean dan ketersediaan worker yang tidak dijamin. Workflow tidak lagi bergantung pada AI Horde untuk menyelesaikan render. Log workflow 3 November 2026 menunjukkan AI Horde ditolak Cloudflare dengan HTTP 403, Error 1010 `browser_signature_banned`; ini merupakan blokir akses dari sisi layanan, bukan bukti kuota gambar habis. Jangan mengulang request otomatis ketika layanan mengirim error tersebut.
 
-GitHub Actions juga memiliki kuota penggunaan gratis sesuai jenis akun/repository. Edge TTS tidak memerlukan API key, tetapi merupakan layanan online dan ketersediaannya tidak dijamin.
+Jika ilustrasi AI Horde diaktifkan dan gagal, render beralih ke visual motion graphics bawaan. Mode fallback tetap merupakan preview yang harus ditinjau; bukan pengganti otomatis untuk ilustrasi final yang sudah disetujui.
+
+GitHub Actions memiliki kuota penggunaan gratis sesuai jenis akun/repository. Edge TTS tidak memerlukan API key, tetapi merupakan layanan online dan ketersediaannya tidak dijamin.
 
 ## Approval dan upload
 Workflow ini **hanya menghasilkan file preview**. Tidak ada langkah upload ke YouTube. Tinjau MP4 terlebih dahulu; jangan gunakan uploader lama karena belum memiliki approval gate yang aman.
