@@ -1,0 +1,31 @@
+# JavaScript / Remotion
+node_modules/
+.npm/
+out/
+.cache/
+.remotion/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Secrets and local credentials
+.env
+.env.*
+!.env.example
+token.json
+client_secret*.json
+credentials*.json
+
+# Generated episode outputs (keep reusable library assets tracked)
+public/audio/episode-*/
+public/images/episode-*/
+data/*-audio.json
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
