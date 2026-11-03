@@ -236,7 +236,7 @@ class MainActivity : Activity() {
                 }.onFailure { error -> toast(error.message ?: "Lampiran gagal dibaca.") }
             }
             updateAttachmentStatus()
-            if (added > 0) toast("$"+"added lampiran berhasil ditambahkan.")
+            if (added > 0) toast("$added lampiran berhasil ditambahkan.")
         }
     }
 
@@ -244,7 +244,7 @@ class MainActivity : Activity() {
         if (!::attachmentStatusView.isInitialized) return
         val names = selectedAttachments.map { it.name } + selectedBinaryAttachments.map { it.name }
         attachmentStatusView.text = if (names.isEmpty()) "Belum ada lampiran."
-        else "Lampiran (${names.size}/${TextAttachmentReader.MAX_FILES}):\\n" +
+        else "Lampiran (${names.size}/${TextAttachmentReader.MAX_FILES}):\n" +
             names.joinToString("\\n") { "• $it" }
     }
 
