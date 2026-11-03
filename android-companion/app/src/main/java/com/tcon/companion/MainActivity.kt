@@ -423,7 +423,7 @@ class MainActivity : Activity() {
         ))
         val orchestrator = MeetingOrchestrator(providers)
         meetingJob = activityScope.launch {
-            appendTranscript("TCon", "Diskusi dimulai. Urutan: ${providers.keys.joinToString { providerName(it) }}")
+            appendTranscript("TCon", "Diskusi dimulai. Peserta: ${providers.keys.joinToString { providerName(it) }}. Putaran: $rounds.")
             try {
                 orchestrator.runMeeting(
                     config = MeetingConfig(
