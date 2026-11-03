@@ -28,7 +28,13 @@ interface AiProvider {
     suspend fun respond(
         systemInstruction: String,
         conversation: List<AiMessage>,
-        maxResponseCharacters: Int,
-        attachments: List<BinaryAttachment> = emptyList()
+        maxResponseCharacters: Int
     ): Result<String>
+
+    suspend fun respondWithAttachments(
+        systemInstruction: String,
+        conversation: List<AiMessage>,
+        maxResponseCharacters: Int,
+        attachments: List<BinaryAttachment>
+    ): Result<String> = respond(systemInstruction, conversation, maxResponseCharacters)
 }
