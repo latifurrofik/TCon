@@ -89,6 +89,7 @@ class MainActivity : Activity() {
         root.addView(promptInput, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ))
+        addButton(root, "Bagikan instruksi ke aplikasi AI") { sharePrompt() }
         addButton(root, "Mulai diskusi dengan AI yang terhubung") { confirmAndStartMeeting() }
         addButton(root, "Hentikan diskusi") {
             meetingJob?.cancel()
