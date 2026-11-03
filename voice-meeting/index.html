@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101522">
+  <meta name="description" content="AI Voice Meeting — fondasi antarmuka diskusi dua AI dari Android.">
+  <title>AI Voice Meeting | TCon</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="AI Voice Meeting">
+        <span class="brand-mark">◎</span>
+        <span><strong>AI Voice Meeting</strong><small>by TCon</small></span>
+      </a>
+      <span class="stage-pill"><i></i> FOUNDATION</span>
+    </header>
+
+    <section class="intro">
+      <p class="eyebrow">RUANG DISKUSI AI</p>
+      <h1>Dua pemikir.<br><span>Satu percakapan.</span></h1>
+      <p class="subhead">Siapkan topik, lalu dengarkan simulasi moderator dan dua peserta dengan suara berbeda.</p>
+    </section>
+
+    <section class="meeting-card" aria-labelledby="meeting-title">
+      <div class="card-heading">
+        <div><p class="eyebrow">MEETING ROOM</p><h2 id="meeting-title">Diskusi terbuka</h2></div>
+        <span id="status" class="status"><i></i> Siap</span>
+      </div>
+
+      <label class="field-label" for="topic">Topik diskusi</label>
+      <textarea id="topic" rows="3" maxlength="500">Apakah kecerdasan buatan akan menggantikan pekerjaan manusia?</textarea>
+
+      <div class="participants">
+        <article class="participant participant-a">
+          <div class="avatar avatar-a">GPT</div>
+          <div class="participant-copy"><strong>ChatGPT</strong><span>Peserta A · Suara 1</span></div>
+          <span class="voice-dot"></span>
+        </article>
+        <article class="participant participant-b">
+          <div class="avatar avatar-b">G</div>
+          <div class="participant-copy"><strong>Gemini</strong><span>Peserta B · Suara 2</span></div>
+          <span class="voice-dot"></span>
+        </article>
+      </div>
+
+      <div class="voice-settings">
+        <div class="section-label"><span>Suara browser</span><small>Pratinjau lokal</small></div>
+        <label for="voiceA">Suara ChatGPT</label>
+        <select id="voiceA"><option value="">Memuat suara…</option></select>
+        <label for="voiceB">Suara Gemini</label>
+        <select id="voiceB"><option value="">Memuat suara…</option></select>
+        <p id="voice-note" class="hint">Pilihan suara mengikuti suara yang tersedia di browser/perangkat Android.</p>
+      </div>
+
+      <div class="controls">
+        <button id="start" class="button button-primary" type="button"><span>▶</span> Mulai demo suara</button>
+        <div class="control-row">
+          <button id="pause" class="button button-secondary" type="button" disabled>Ⅱ Jeda</button>
+          <button id="stop" class="button button-danger" type="button" disabled>■ Berhenti</button>
+        </div>
+      </div>
+      <p class="demo-notice"><strong>Mode fondasi:</strong> ini hanya demo suara lokal dari browser. ChatGPT API, Gemini API, moderator AI, dan percakapan otomatis belum dihubungkan.</p>
+    </section>
+
+    <section class="transcript-card">
+      <div class="section-label"><span>Transkrip demo</span><small id="turn-count">0 giliran</small></div>
+      <div id="transcript" class="transcript" aria-live="polite">
+        <p class="empty-state">Percakapan demo akan muncul di sini.</p>
+      </div>
+    </section>
+
+    <footer><span>TCon · AI Voice Meeting</span><span>Phase 1 / 6</span></footer>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>
