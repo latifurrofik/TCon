@@ -33,7 +33,7 @@ jobs:
       - name: TypeScript check
         run: npm run typecheck
       - name: List Remotion compositions
-        run: npx remotion compositions src/index.ts --gl=swiftshader
+        run: npx remotion compositions src/index.ts --gl=swangle
       - name: Render 10-second Three.js prototype
         run: npm run render:three:prototype
       - name: Upload Three.js preview
