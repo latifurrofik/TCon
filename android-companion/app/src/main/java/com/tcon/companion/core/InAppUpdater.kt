@@ -85,7 +85,7 @@ class InAppUpdater(private val context: Context) {
             }
             val asset = selected ?: error("Rilis $tag belum menyertakan APK.")
             val size = asset.optLong("size", -1L)
-            require(size in 1..MAX_APK_BYTES) { "Ukuran APK tidak valid atau melebihi batas 150 MB." }
+            require(size > 0L && size <= MAX_APK_BYTES) { "Ukuran APK tidak valid atau melebihi batas 150 MB." }
             val digest = asset.optString("digest")
             require(digest.matches(Regex("sha256:[a-fA-F0-9]{64}"))) {
                 "Rilis tidak menyediakan SHA-256 APK. Unduhan dibatalkan demi keamanan."
