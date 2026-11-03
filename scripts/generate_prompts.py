@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_EPISODE = ROOT / "data" / "episode-01.json"
+DEFAULT_EPISODE = ROOT / "data" / "episodes" / "episode_1" / "naskah" / "storyboard.json"
 DEFAULT_OUTPUT_DIR = ROOT / "data" / "prompt-manifests"
 VISUAL_BIBLE = "docs/VISUAL-PRODUCTION-BIBLE.md"
 STORYBOARD_BIBLE = "docs/STORYBOARD-BIBLE.md"
@@ -122,7 +122,12 @@ def main() -> int:
     args = parser.parse_args()
 
     episode_path = args.episode.resolve()
-    output_path = args.output.resolve() if args.output else (DEFAULT_OUTPUT_DIR / f"{episode_path.stem}.prompts.json")
+    if args.output:
+        output_path = args.output.resolve()
+    elif episode_path.parent.name == "naskah" and episode_path.parent.parent.parent.name == "episodes":
+        output_path = episode_path.parent.parent / "prompt" / "visual-prompts.json"
+    else:
+        output_path = DEFAULT_OUTPUT_DIR / f"{episode_path.stem}.prompts.json"
     if output_path.exists() and not args.overwrite:
         raise SystemExit(f"Refusing to overwrite existing manifest: {output_path}. Use --overwrite to replace it.")
     episode = json.loads(episode_path.read_text(encoding="utf-8"))
