@@ -75,13 +75,24 @@ class ProviderApiClient(
         fun contentFor(message: AiMessage) =
             if (message.provider == null) message.content
             else "[${providerLabel(message.provider)} berkata]:\n${message.content}"
+        // Gemini and Claude expect a clean role sequence; coalesce adjacent
+        // peer messages that become user-role context for the current provider.
+        val groupedTurns = mutableListOf<Pair<String, String>>()
+        turns.forEach { message ->
+            val role = roleFor(message, if (id == ProviderId.GEMINI) "model" else "assistant", "user")
+            val text = contentFor(message)
+            val previous = groupedTurns.lastOrNull()
+            if (previous?.first == role) {
+                groupedTurns[groupedTurns.lastIndex] = role to "${previous.second}\n\n$text"
+            } else {
+                groupedTurns += role to text
+            }
+        }
         return when (id) {
             ProviderId.OPENAI -> {
                 val input = JSONArray()
-                turns.forEach { message ->
-                    input.put(JSONObject()
-                        .put("role", roleFor(message, "assistant", "user"))
-                        .put("content", contentFor(message)))
+                groupedTurns.forEach { (role, text) ->
+                    input.put(JSONObject().put("role", role).put("content", text))
                 }
                 Triple(
                     "https://api.openai.com/v1/responses",
@@ -91,10 +102,10 @@ class ProviderApiClient(
             }
             ProviderId.GEMINI -> {
                 val contents = JSONArray()
-                turns.forEach { message ->
+                groupedTurns.forEach { (role, text) ->
                     contents.put(JSONObject()
-                        .put("role", roleFor(message, "model", "user"))
-                        .put("parts", JSONArray().put(JSONObject().put("text", contentFor(message)))))
+                        .put("role", role)
+                        .put("parts", JSONArray().put(JSONObject().put("text", text))))
                 }
                 Triple(
                     "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent",
