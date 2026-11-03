@@ -251,8 +251,8 @@ class MainActivity : Activity() {
         if (openTasks.isNotEmpty()) {
             append("TUGAS PROYEK YANG MASIH TERBUKA (data referensi):\n")
             openTasks.take(20).forEach { task ->
-                append("- [\${task.status.name}] \${task.title}")
-                if (task.details.isNotBlank()) append(": \${task.details.take(250)}")
+                append("- [${task.status.name}] ${task.title}")
+                if (task.details.isNotBlank()) append(": ${task.details.take(250)}")
                 append("\n")
             }
             append("\n")
@@ -662,7 +662,7 @@ class MainActivity : Activity() {
 
     private fun manageTasks() {
         val tasks = runCatching { meetingHistoryStore.listTasks() }.getOrElse {
-            toast("Tidak dapat membaca daftar tugas: \${it.message}")
+            toast("Tidak dapat membaca daftar tugas: ${it.message}")
             return
         }
         val labels = mutableListOf("+ Tambah tugas")
@@ -672,10 +672,10 @@ class MainActivity : Activity() {
                 TaskStatus.IN_PROGRESS -> "Dikerjakan"
                 TaskStatus.DONE -> "Selesai"
             }
-            "$status · \${task.title}"
+            "$status · ${task.title}"
         }
         AlertDialog.Builder(this)
-            .setTitle("Tugas proyek (\${tasks.size})")
+            .setTitle("Tugas proyek (${tasks.size})")
             .setItems(labels.toTypedArray()) { _, which ->
                 if (which == 0) showTaskEditor(null)
                 else showTaskActions(tasks[which - 1])
@@ -717,7 +717,7 @@ class MainActivity : Activity() {
                     }.onSuccess {
                         toast("Tugas disimpan.")
                     }.onFailure {
-                        toast("Gagal menyimpan tugas: \${it.message}")
+                        toast("Gagal menyimpan tugas: ${it.message}")
                     }
                 }
             }
@@ -757,7 +757,7 @@ class MainActivity : Activity() {
     private fun setTaskStatus(task: TConTask, status: TaskStatus) {
         runCatching { meetingHistoryStore.updateTaskStatus(task.id, status) }
             .onSuccess { toast("Status tugas diperbarui.") }
-            .onFailure { toast("Gagal memperbarui tugas: \${it.message}") }
+            .onFailure { toast("Gagal memperbarui tugas: ${it.message}") }
     }
 
     private fun showMeetingHistory() {
