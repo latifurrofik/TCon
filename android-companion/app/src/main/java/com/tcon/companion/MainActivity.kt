@@ -186,7 +186,7 @@ class MainActivity : Activity() {
             putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
             putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
                 "text/*", "application/json", "application/xml", "application/pdf",
-                "application/*+json", "application/*+xml", "image/jpeg", "image/png", "image/webp", "image/gif"
+                "application/*+json", "application/*+xml", "image/jpeg", "image/png", "image/webp"
             ))
         }
         startActivityForResult(intent, REQUEST_DOCUMENTS)
