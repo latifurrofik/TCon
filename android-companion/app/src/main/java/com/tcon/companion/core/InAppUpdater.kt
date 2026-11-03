@@ -105,12 +105,10 @@ class InAppUpdater(private val context: Context) {
         while (true) {
             val query = DownloadManager.Query().setFilterById(downloadId)
             val cursor = manager.query(query)
-            val status: Int
-            val reason: Int
-            cursor.use {
+            val (status, reason) = cursor.use {
                 require(it.moveToFirst()) { "Unduhan tidak ditemukan." }
-                status = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
-                reason = it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) to
+                    it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
             }
             when (status) {
                 DownloadManager.STATUS_SUCCESSFUL -> break
