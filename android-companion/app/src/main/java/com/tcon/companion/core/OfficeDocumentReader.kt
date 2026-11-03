@@ -57,9 +57,9 @@ object OfficeDocumentReader {
         val result = StringBuilder()
         var event = parser.eventType
         while (event != XmlPullParser.END_DOCUMENT && result.length < MAX_EXTRACTED_CHARS) {
-            if (event == XmlPullParser.START_TAG && parser.name == "t") {
+            if (event == XmlPullParser.START_TAG && localName(parser) == "t") {
                 result.append(parser.nextText()).append(' ')
-            } else if (event == XmlPullParser.END_TAG && parser.name == "p") {
+            } else if (event == XmlPullParser.END_TAG && localName(parser) == "p") {
                 result.append('\n')
             }
             event = parser.next()
@@ -84,7 +84,7 @@ object OfficeDocumentReader {
             var event = parser.eventType
             while (event != XmlPullParser.END_DOCUMENT && output.length < MAX_EXTRACTED_CHARS) {
                 when (event) {
-                    XmlPullParser.START_TAG -> when (parser.name) {
+                    XmlPullParser.START_TAG -> when (localName(parser)) {
                         "row" -> output.append('\n')
                         "c" -> {
                             inCell = true
@@ -125,7 +125,7 @@ object OfficeDocumentReader {
                     "si" -> { inItem = true; current = StringBuilder() }
                     "t" -> if (inItem) current.append(parser.nextText())
                 }
-                XmlPullParser.END_TAG -> if (parser.name == "si" && inItem) {
+                XmlPullParser.END_TAG -> if (localName(parser) == "si" && inItem) {
                     values += current.toString()
                     inItem = false
                 }
@@ -158,6 +158,8 @@ object OfficeDocumentReader {
         }
         return entries
     }
+
+    private fun localName(parser: XmlPullParser): String = parser.name.substringAfter(":")
 
     private fun queryName(contentResolver: ContentResolver, uri: Uri): String {
         var name: String? = null
