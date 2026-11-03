@@ -3,6 +3,30 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val releaseStoreFile = providers.environmentVariable("TCON_RELEASE_STORE_FILE").orNull
+val releaseStorePassword = providers.environmentVariable("TCON_RELEASE_STORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("TCON_RELEASE_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("TCON_RELEASE_KEY_PASSWORD").orNull
+
+val hasReleaseSigning = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
+
+val releaseTaskRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+
+if (releaseTaskRequested && !hasReleaseSigning) {
+    throw GradleException(
+        "Release signing is not configured. Set TCON_RELEASE_STORE_FILE, " +
+            "TCON_RELEASE_STORE_PASSWORD, TCON_RELEASE_KEY_ALIAS, and " +
+            "TCON_RELEASE_KEY_PASSWORD. See android-companion/README.md."
+    )
+}
+
 android {
     namespace = "com.tcon.companion"
     compileSdk = 35
@@ -13,6 +37,25 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1.0"
+    }
+
+    if (hasReleaseSigning) {
+        signingConfigs {
+            create("release") {
+                storeFile = file(releaseStoreFile!!)
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
     }
 
     compileOptions {
