@@ -61,13 +61,16 @@ async def ask_openai(request: ChatRequest) -> str:
                 "jangan mengaku sebagai moderator. Hindari markdown, daftar panjang, dan "
                 "kalimat pembuka yang berulang."
             ),
-        },
-        {"role": "user", "content": f"Topik diskusi: {request.topic}\n\n{request.prompt}"},
+        }
     ]
     messages.extend(
         {"role": item.role, "content": item.content}
         for item in request.history[-12:]
     )
+    messages.append({
+        "role": "user",
+        "content": f"Topik diskusi: {request.topic}\\n\\n{request.prompt}",
+    })
     payload = {
         "model": OPENAI_MODEL,
         "messages": messages,
