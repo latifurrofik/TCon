@@ -117,10 +117,8 @@ class ProviderApiClient(
             }
             ProviderId.CLAUDE -> {
                 val messages = JSONArray()
-                turns.forEach { message ->
-                    messages.put(JSONObject()
-                        .put("role", roleFor(message, "assistant", "user"))
-                        .put("content", contentFor(message)))
+                groupedTurns.forEach { (role, text) ->
+                    messages.put(JSONObject().put("role", role).put("content", text))
                 }
                 Triple(
                     "https://api.anthropic.com/v1/messages",
