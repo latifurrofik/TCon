@@ -114,6 +114,8 @@ class MainActivity : Activity() {
         addButton(root, "Hentikan diskusi") {
             meetingJob?.cancel()
             meetingJob = null
+            textToSpeech?.stop()
+            speechRecognizer?.cancel()
             appendTranscript("TCon", "Diskusi dihentikan oleh pengguna.")
         }
 
@@ -354,6 +356,7 @@ class MainActivity : Activity() {
 
     private fun startMeeting(topic: String, providers: Map<ProviderId, ProviderApiClient>) {
         meetingJob?.cancel()
+        textToSpeech?.stop()
         transcriptView.text = ""
         appendTranscript("Kamu", topic)
         val initial = listOf(AiMessage(
@@ -379,7 +382,6 @@ class MainActivity : Activity() {
                 }
                 appendTranscript("TCon", "Diskusi selesai.")
             } catch (cancelled: CancellationException) {
-                appendTranscript("TCon", "Diskusi dibatalkan.")
                 throw cancelled
             } catch (error: Exception) {
                 appendTranscript("TCon", "Terjadi kesalahan: ${error.message ?: "tidak diketahui"}")
