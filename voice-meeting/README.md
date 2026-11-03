@@ -1,26 +1,31 @@
-# AI Voice Meeting — Phase 1
+# AI Voice Meeting — TCon
 
-Fondasi antarmuka mobile-first untuk proyek AI Voice Meeting di repository TCon.
+Fondasi aplikasi web mobile-first untuk diskusi suara dua AI dari Android.
 
-## Jalankan
-Buka `index.html` melalui static hosting atau server lokal. Untuk pengujian Android, gunakan Chrome dan pastikan suara Text-to-Speech Bahasa Indonesia tersedia di perangkat.
-
-## Yang sudah tersedia
-- UI responsif untuk layar Android.
-- Input topik diskusi.
-- Pemilih dua suara dari daftar suara browser.
-- Demo percakapan lokal bergiliran.
+## Phase 1 — UI dan demo suara
+- UI responsif.
+- Pemilih suara browser.
 - Tombol mulai, jeda, lanjutkan, dan berhenti.
-- Transkrip demo.
 
-## Batasan yang disengaja
-Tahap ini **belum** menghubungkan OpenAI API atau Gemini API. Dialog yang terdengar masih contoh lokal, bukan jawaban AI sungguhan. Tidak ada API key atau biaya API pada tahap ini.
+## Phase 2 — Integrasi API
+- Backend FastAPI terpisah.
+- Endpoint koneksi OpenAI dan Gemini.
+- API key disimpan sebagai environment variables server.
+- Satu putaran: ChatGPT membuka, Gemini menanggapi, suara dibacakan browser.
+
+## Menjalankan frontend
+Buka index.html melalui static hosting atau server lokal. Isi alamat backend pada panel Koneksi AI jika frontend dan backend tidak berada di origin yang sama.
+
+## Menjalankan backend
+Lihat backend/README.md. Instal dependensi dari backend/requirements.txt, atur environment variables, lalu jalankan Uvicorn pada port 8000.
+
+## Catatan biaya
+Gemini API menyediakan free tier untuk model tertentu dengan batas kuota dan ketersediaan yang dapat berubah. OpenAI API memiliki billing terpisah dari langganan ChatGPT. Untuk benar-benar tanpa biaya API, integrasi OpenAI harus dibiarkan nonaktif dan gunakan Gemini free tier saja.
+
+## Catatan keamanan
+Jangan pernah menaruh API key di frontend atau repository. Backend saat ini belum memiliki autentikasi dan rate limiter; gunakan lokal/pribadi untuk pengujian, jangan publikasikan backend sebelum pengamanan tambahan diterapkan.
 
 ## Tahap berikutnya
-1. Backend aman untuk menyimpan API key di environment variables.
-2. Integrasi Gemini dan OpenAI secara terpisah.
-3. Moderator yang mengatur giliran dan menjaga konteks.
-4. TTS dua suara dan kontrol percakapan berkelanjutan.
-5. Pengamanan biaya, batas penggunaan, dan penyimpanan sesi.
-
-Jangan menaruh API key di frontend atau meng-commit file rahasia ke GitHub.
+1. Moderator otomatis yang mengatur giliran.
+2. Percakapan berkelanjutan dengan tombol jeda/berhenti.
+3. Pengamanan API, pembatasan biaya, dan riwayat sesi.
