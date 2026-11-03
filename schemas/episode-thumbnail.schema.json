@@ -1,0 +1,17 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "title":"Episode Thumbnail Review Record",
+  "type":"object",
+  "required":["exists","status","path","sha256","file_size_bytes","dimensions","aspect_ratio","approved_at"],
+  "properties":{
+    "exists":{"type":"boolean"},
+    "status":{"enum":["missing","pending_review","approved","rejected"]},
+    "path":{"type":["string","null"],"enum":["thumbnail.jpg","thumbnail.png",null]},
+    "sha256":{"type":["string","null"],"pattern":"^[a-f0-9]{64}$"},
+    "file_size_bytes":{"type":["integer","null"],"minimum":0},
+    "dimensions":{"type":["object","null"],"required":["width","height"],"properties":{"width":{"type":"integer","minimum":1},"height":{"type":"integer","minimum":1}},"additionalProperties":false},
+    "aspect_ratio":{"type":["number","null"],"exclusiveMinimum":0},
+    "approved_at":{"type":["string","null"],"format":"date-time"}
+  },
+  "additionalProperties":false
+}
