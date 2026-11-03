@@ -7,6 +7,7 @@
 - Optional OpenAI Responses, Gemini generateContent, and Anthropic Messages API adapter.
 - AES-GCM API-key vault backed by Android Keystore.
 - Basic UI for entering provider model IDs/API keys, selecting configured meeting participants, choosing 1–5 discussion rounds, confirming API cost, viewing transcript, and stopping the discussion.
+- Local SQLite meeting history: stores meeting topic, participants, round count, and transcript entries; the UI can reopen the latest 50 meetings. Data stays in app-private storage and Android backup is disabled.
 - Provider-specific conversation roles: each AI sees its own earlier messages as assistant turns and peer AI contributions as attributed user context; adjacent same-role turns are coalesced for API compatibility.
 - HTTP request cancellation wired to coroutine cancellation; stopping a meeting disconnects the active provider request.
 - Android app backup disabled so encrypted API-key ciphertext is not restored without its device-bound Keystore key.
@@ -17,7 +18,7 @@
 ## Not implemented yet
 - Build/test validation on GitHub Actions or a physical Android device.
 - Streaming responses, continuous/full-duplex voice, hands-free turn detection, robust audio-focus arbitration, and selectable distinct TTS voices.
-- Durable database for chat/meeting history, project memory, file ingestion and artifacts.
+- Project memory, file ingestion and artifacts. (Basic local meeting history is implemented; broader project memory is not.)
 - Task board, workflow automation, notifications, and in-app update mechanism.
 - Automatic reading of responses from consumer ChatGPT/Gemini/Claude apps (not exposed through the handoff intents).
 
