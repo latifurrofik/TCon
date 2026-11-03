@@ -128,6 +128,7 @@ class MainActivity : Activity() {
         }
 
         addButton(root, "Buka riwayat diskusi") { showMeetingHistory() }
+        addButton(root, "Kelola memori proyek") { manageProjectMemory() }
         addSection(root, "TRANSKRIP")
         transcriptView = TextView(this).apply {
             text = "Belum ada diskusi."
@@ -443,7 +444,8 @@ class MainActivity : Activity() {
                         topic = topic,
                         participants = providers.keys.toList(),
                         maxTurnsPerProvider = rounds,
-                        maxResponseCharacters = 1400
+                        maxResponseCharacters = 1400,
+                        projectContext = meetingHistoryStore.buildProjectContext()
                     ),
                     initialMessages = initial
                 ) { message ->
@@ -468,6 +470,74 @@ class MainActivity : Activity() {
             runCatching { meetingHistoryStore.appendEntry(meetingId, label, message) }
                 .onFailure { toast("Riwayat lokal gagal disimpan: ${it.message}") }
         }
+    }
+
+    private fun manageProjectMemory() {
+        val memories = runCatching { meetingHistoryStore.listMemories() }
+            .getOrElse {
+                toast("Tidak dapat membaca memori: ${it.message}")
+                return
+            }
+        val labels = memories.map { "${it.title} — ${it.content.take(90)}" }.toMutableList()
+        labels.add(0, "+ Tambah memori baru")
+
+        AlertDialog.Builder(this)
+            .setTitle("Memori proyek (${memories.size})")
+            .setItems(labels.toTypedArray()) { _, which ->
+                if (which == 0) {
+                    val form = LinearLayout(this).apply {
+                        orientation = LinearLayout.VERTICAL
+                        setPadding(36, 8, 36, 0)
+                    }
+                    val titleInput = EditText(this).apply {
+                        hint = "Judul memori, misalnya: Tujuan TCon"
+                        setSingleLine(true)
+                    }
+                    val contentInput = EditText(this).apply {
+                        hint = "Informasi penting yang perlu diketahui GPT, Gemini, dan Claude"
+                        minLines = 4
+                        gravity = Gravity.TOP or Gravity.START
+                    }
+                    form.addView(titleInput)
+                    form.addView(contentInput)
+                    AlertDialog.Builder(this)
+                        .setTitle("Tambah memori proyek")
+                        .setMessage("Memori akan disimpan di perangkat dan disertakan dalam konteks diskusi AI berikutnya.")
+                        .setView(form)
+                        .setPositiveButton("Simpan") { _, _ ->
+                            val title = titleInput.text.toString().trim()
+                            val content = contentInput.text.toString().trim()
+                            if (title.isBlank() || content.isBlank()) {
+                                toast("Judul dan isi memori wajib diisi.")
+                            } else {
+                                runCatching { meetingHistoryStore.addMemory(title, content) }
+                                    .onSuccess { toast("Memori proyek disimpan.") }
+                                    .onFailure { toast("Gagal menyimpan memori: ${it.message}") }
+                            }
+                        }
+                        .setNegativeButton("Batal", null)
+                        .show()
+                } else {
+                    val selected = memories[which - 1]
+                    AlertDialog.Builder(this)
+                        .setTitle(selected.title)
+                        .setMessage(selected.content)
+                        .setNeutralButton("Hapus") { _, _ ->
+                            AlertDialog.Builder(this)
+                                .setMessage("Hapus memori ini dari perangkat?")
+                                .setPositiveButton("Hapus") { _, _ ->
+                                    meetingHistoryStore.deleteMemory(selected.id)
+                                    toast("Memori dihapus.")
+                                }
+                                .setNegativeButton("Batal", null)
+                                .show()
+                        }
+                        .setPositiveButton("Tutup", null)
+                        .show()
+                }
+            }
+            .setNegativeButton("Tutup", null)
+            .show()
     }
 
     private fun showMeetingHistory() {
