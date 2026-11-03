@@ -9,6 +9,7 @@
 - Basic UI for entering provider model IDs/API keys, selecting configured meeting participants, choosing 1–5 discussion rounds, confirming API cost, viewing transcript, and stopping the discussion.
 - Local SQLite meeting history: stores meeting topic, participants, round count, and transcript entries; the UI can reopen the latest 50 meetings. Data stays in app-private storage and Android backup is disabled.
 - Editable project memory stored in SQLite, with add/list/delete controls. Saved notes are injected as project context into every provider's system instruction for new meetings.
+- Local project task board in SQLite: add/edit/delete tasks, track TODO / IN_PROGRESS / DONE status, and include up to 20 open tasks as reference context in new AI meetings. Database schema migration v2 to v3 is included.
 - Text document attachments through Android's file picker: up to five TXT/Markdown/CSV/TSV/JSON/XML/HTML/YAML/LOG files, maximum 512 KB each. Extracted text is included in the meeting context for every selected provider, with a total attachment context cap of 12,000 characters.
 - Provider-specific conversation roles: each AI sees its own earlier messages as assistant turns and peer AI contributions as attributed user context; adjacent same-role turns are coalesced for API compatibility.
 - HTTP request cancellation wired to coroutine cancellation; stopping a meeting disconnects the active provider request.
