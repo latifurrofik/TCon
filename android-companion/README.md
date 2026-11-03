@@ -1,23 +1,30 @@
-# TCon Companion for Android
+# TCon Android Companion
 
-Native Android MVP for passing image prompts between the official ChatGPT and Gemini apps without a server or API key.
+TCon is being developed as an Android-first workspace for collaboration between ChatGPT, Gemini, and Claude.
 
-## Current features
-- Prompt editor with local draft persistence.
-- Android Sharesheet handoff for text prompts.
-- Launch buttons for the installed ChatGPT and Gemini apps.
-- No password, cookie, session-token, or API-key handling.
+## Current implemented foundation
+- Native Kotlin Android app.
+- Launch shortcuts for installed ChatGPT, Gemini, and Claude apps.
+- Text handoff through Android Sharesheet.
+- Local persistence of the draft prompt.
+- No collection of passwords, cookies, private app sessions, or API keys.
 
 ## Build
-Open the `android-companion` directory in Android Studio, allow Gradle sync, then run the `app` configuration on an Android device or emulator.
+Open this directory in Android Studio, sync Gradle, and run the `app` configuration.
 
 Requirements:
-- Android Studio with JDK 17.
-- Android SDK Platform 35.
-- Android 8.0 (API 26) or newer device.
+- JDK 17
+- Android SDK Platform 35
+- Android 8.0 (API 26) or newer
 
-## Current limitations
-This is a handoff MVP, not full cross-app automation. Android may show a Sharesheet and the user chooses Gemini. App package IDs and target-app share support must be verified on the actual device. It does not listen to ChatGPT or Gemini conversations, read their screens, or automate image generation.
+## Important current limitations
+This is a handoff foundation, not an automatic multi-AI conversation system. TCon cannot currently read AI app conversations, control their microphones, or retrieve their responses automatically. The user chooses the target app in the Android Sharesheet and confirms actions.
 
-## Next
-Test installation and prompt sharing on the user's Android phone before adding any AccessibilityService. Accessibility must be opt-in, narrowly scoped, visible, and stoppable by the user.
+App package visibility and share behavior must be tested on a real device. The Claude package identifier is currently configured as `com.anthropic.claude`; if the installed app uses a different identifier on the device, the launcher will report it unavailable.
+
+## Development principles
+- Prefer official app handoff and free/local Android capabilities first.
+- Treat direct provider APIs as optional adapters; API usage may incur separate charges.
+- Accessibility automation, if later added, must be opt-in, transparent, narrowly scoped, and stoppable.
+- Never extract or store provider app passwords, cookies, or session tokens.
+- Require user approval for consequential external actions.
