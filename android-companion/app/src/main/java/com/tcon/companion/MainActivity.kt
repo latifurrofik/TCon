@@ -183,7 +183,7 @@ class MainActivity : Activity() {
         try {
             InAppUpdater(this).resumePendingInstall(this)
         } catch (error: Exception) {
-            toast("Tidak dapat membuka pemasang TCon: \${error.message ?: "kesalahan tidak diketahui"}")
+            toast("Tidak dapat membuka pemasang TCon: ${error.message ?: "kesalahan tidak diketahui"}")
         }
     }
 
