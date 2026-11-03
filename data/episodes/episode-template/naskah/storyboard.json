@@ -1,0 +1,15 @@
+{
+  "id": "episode-0",
+  "series_id": "disetir-media-sosial",
+  "title": "",
+  "language": "id-ID",
+  "voice": "id-ID-GadisNeural",
+  "format": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "duration_seconds": 50
+  },
+  "sources": [],
+  "scenes": []
+}
