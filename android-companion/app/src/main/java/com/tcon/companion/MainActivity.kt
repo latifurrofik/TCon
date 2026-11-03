@@ -200,7 +200,7 @@ class MainActivity : Activity() {
                 val notes = update.notes.take(1800).ifBlank { "Tidak ada catatan rilis." }
                 AlertDialog.Builder(this@MainActivity)
                     .setTitle("Pembaruan TCon " + update.version)
-                    .setMessage("Versi baru tersedia.\n\n" + notes + "\\n\\nAPK akan diunduh dari GitHub Releases. Android akan memverifikasi tanda tangan aplikasi sebelum instalasi.")
+                    .setMessage("Versi baru tersedia.\n\n" + notes + "\n\nAPK akan diunduh dari GitHub Releases. Android akan memverifikasi tanda tangan aplikasi sebelum instalasi.")
                     .setPositiveButton("Unduh dan instal") { _, _ ->
                         activityScope.launch {
                             try {
