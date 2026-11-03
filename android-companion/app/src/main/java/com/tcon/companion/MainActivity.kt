@@ -27,6 +27,7 @@ import com.tcon.companion.core.AiMessage
 import com.tcon.companion.core.ApiKeyVault
 import com.tcon.companion.core.MeetingConfig
 import com.tcon.companion.core.MeetingOrchestrator
+import com.tcon.companion.core.MeetingHistoryStore
 import com.tcon.companion.core.MessageRole
 import com.tcon.companion.core.ProviderApiClient
 import com.tcon.companion.core.ProviderId
@@ -38,11 +39,15 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.Locale
+import java.text.SimpleDateFormat
+import java.util.Date
 
 class MainActivity : Activity() {
     private lateinit var promptInput: EditText
     private lateinit var transcriptView: TextView
     private lateinit var apiKeyVault: ApiKeyVault
+    private lateinit var meetingHistoryStore: MeetingHistoryStore
+    private var activeMeetingId: Long? = null
     private lateinit var activityScope: CoroutineScope
     private var meetingJob: Job? = null
     private var speechRecognizer: SpeechRecognizer? = null
@@ -53,6 +58,7 @@ class MainActivity : Activity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         apiKeyVault = ApiKeyVault(this)
+        meetingHistoryStore = MeetingHistoryStore(this)
         activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
         initializeTextToSpeech()
         initializeSpeechRecognizer()
@@ -121,6 +127,7 @@ class MainActivity : Activity() {
             appendTranscript("TCon", "Diskusi dihentikan oleh pengguna.")
         }
 
+        addButton(root, "Buka riwayat diskusi") { showMeetingHistory() }
         addSection(root, "TRANSKRIP")
         transcriptView = TextView(this).apply {
             text = "Belum ada diskusi."
@@ -159,6 +166,7 @@ class MainActivity : Activity() {
         textToSpeech?.shutdown()
         textToSpeech = null
         activityScope.cancel()
+        meetingHistoryStore.close()
         super.onDestroy()
     }
 
@@ -415,6 +423,11 @@ class MainActivity : Activity() {
         meetingJob?.cancel()
         textToSpeech?.stop()
         transcriptView.text = ""
+        activeMeetingId = meetingHistoryStore.createMeeting(
+            topic = topic,
+            participants = providers.keys.joinToString { providerName(it) },
+            rounds = rounds
+        )
         appendTranscript("Kamu", topic)
         val initial = listOf(AiMessage(
             id = "user-${System.currentTimeMillis()}",
@@ -451,6 +464,44 @@ class MainActivity : Activity() {
         val label = speaker ?: "AI"
         if (transcriptView.text.toString() == "Belum ada diskusi.") transcriptView.text = ""
         transcriptView.append("\n\n$label\n$message")
+        activeMeetingId?.let { meetingId ->
+            runCatching { meetingHistoryStore.appendEntry(meetingId, label, message) }
+                .onFailure { toast("Riwayat lokal gagal disimpan: ${it.message}") }
+        }
+    }
+
+    private fun showMeetingHistory() {
+        val meetings = runCatching { meetingHistoryStore.listMeetings() }
+            .getOrElse {
+                toast("Tidak dapat membaca riwayat: ${it.message}")
+                return
+            }
+        if (meetings.isEmpty()) {
+            toast("Belum ada riwayat diskusi.")
+            return
+        }
+        val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("id", "ID"))
+        val labels = meetings.map { meeting ->
+            "${meeting.topic}\n${dateFormat.format(Date(meeting.startedAt))} · ${meeting.participants} · ${meeting.rounds} putaran"
+        }.toTypedArray()
+
+        AlertDialog.Builder(this)
+            .setTitle("Riwayat diskusi (maks. 50)")
+            .setItems(labels) { _, which ->
+                val selected = meetings[which]
+                val entries = runCatching { meetingHistoryStore.getEntries(selected.id) }
+                    .getOrElse {
+                        toast("Tidak dapat membuka riwayat: ${it.message}")
+                        return@setItems
+                    }
+                activeMeetingId = null
+                transcriptView.text = entries.joinToString("\n\n") { entry ->
+                    "${entry.speaker}\n${entry.content}"
+                }.ifBlank { "Tidak ada pesan tersimpan." }
+                toast("Riwayat dibuka. Diskusi baru akan membuat catatan terpisah.")
+            }
+            .setNegativeButton("Tutup", null)
+            .show()
     }
 
     private fun sharePrompt() {
