@@ -9,6 +9,7 @@ TCon is an Android-first workspace for collaboration between ChatGPT (OpenAI), G
 - Optional official API adapters for OpenAI Responses, Gemini generateContent, and Anthropic Messages.
 - API-key encryption at rest using an AES-GCM key held by Android Keystore.
 - Basic configuration UI for provider model IDs and API keys, plus a user-confirmed sequential discussion action.
+- Meeting setup lets users select configured AI participants and choose 1–5 rounds; each selected AI gets one turn per round.
 - Unit tests for orchestration order, transcript propagation, turn/length bounds, and provider failure handling.
 - Indonesian push-to-talk speech recognition using the Android speech service.
 - Sequential AI response playback through Android TextToSpeech, with pitch differences to distinguish speakers.
