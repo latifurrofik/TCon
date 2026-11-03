@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>TCon Image Uploader</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#10131b;color:#eef2ff;font:16px system-ui,sans-serif;padding:22px}.wrap{max-width:620px;margin:auto}h1{font-size:25px}p{color:#b8c0d4;line-height:1.5}.card{background:#1b2130;border:1px solid #343d52;border-radius:16px;padding:18px;margin:16px 0}label{display:block;font-weight:650;margin:14px 0 7px}input{width:100%;padding:12px;border-radius:9px;border:1px solid #46516b;background:#111725;color:white}button{width:100%;padding:14px;border:0;border-radius:10px;background:#6c8cff;color:#071024;font-weight:750;font-size:16px;margin-top:18px}button:disabled{opacity:.5}small{color:#aab4c9}.status{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:14px;padding:12px;border-radius:9px;background:#111725}.ok{color:#8ff0b0}.err{color:#ff9a9a}
+</style></head>
+<body><main class="wrap"><h1>TCon · Image Uploader</h1>
+<p>Unggah gambar langsung ke repository <b>latifurrofik/TCon</b> dari Android atau browser. Token hanya dipakai di sesi halaman ini dan tidak disimpan.</p>
+<div class="card">
+<label for="token">GitHub Fine-grained Personal Access Token</label>
+<input id="token" type="password" autocomplete="off" placeholder="github_pat_…" />
+<small>Buat token dengan akses hanya ke repository TCon dan permission Contents: Read and write.</small>
+<label for="file">Pilih gambar</label><input id="file" type="file" accept="image/*">
+<label for="path">Lokasi file di repository</label><input id="path" value="data/uploads/" placeholder="data/uploads/namafile.png">
+<button id="go">Unggah ke GitHub</button><div id="status" class="status">Siap. Pilih gambar dan masukkan token.</div>
+</div><p><small>Keamanan: jangan bagikan token kepada siapa pun. Setelah selesai, hapus token dari kolom dan cabut token jika sudah tidak diperlukan. File dengan nama sama akan ditolak agar tidak menimpa file lama.</small></p></main>
+<script>
+const $=id=>document.getElementById(id), status=$('status'), btn=$('go');
+function b64(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result.split(',')[1]);r.onerror=reject;r.readAsDataURL(file)})}
+btn.onclick=async()=>{btn.disabled=true;status.className='status';try{
+ const token=$('token').value.trim(), file=$('file').files[0];let path=$('path').value.trim();
+ if(!token||!file||!path)throw Error('Token, gambar, dan lokasi file wajib diisi.');
+ if(path.endsWith('/'))path+=file.name;
+ path=path.replace(/^\/+|\s/g, m=>m===' '?'-':'');
+ if(path.split('/').includes('..'))throw Error('Lokasi file tidak valid.');
+ status.textContent='Membaca gambar…';const content=await b64(file);
+ status.textContent='Mengirim '+file.name+' ('+Math.round(file.size/1024)+' KB) ke GitHub…';
+ const url='https://api.github.com/repos/latifurrofik/TCon/contents/'+path.split('/').map(encodeURIComponent).join('/');
+ const res=await fetch(url,{method:'PUT',headers:{'Authorization':'Bearer '+token,'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28','Content-Type':'application/json'},body:JSON.stringify({message:'Upload image: '+file.name,content})});
+ const data=await res.json();if(!res.ok)throw Error((data.message||'GitHub API error')+(res.status===422?' — mungkin file sudah ada atau path tidak valid.':''));
+ status.className='status ok';status.textContent='BERHASIL DIUNGGAH\nPath: '+path+'\nCommit: '+data.commit.sha+'\n\nFile: '+data.content.html_url;
+ $('token').value='';
+ }catch(e){status.className='status err';status.textContent='GAGAL: '+e.message+'\nPeriksa token, permission Contents: Read and write, dan nama file.'}finally{btn.disabled=false}};
+</script></body></html>
