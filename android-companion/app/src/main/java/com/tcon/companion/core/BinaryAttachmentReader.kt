@@ -27,7 +27,7 @@ object BinaryAttachmentReader {
             extension in setOf("jpg", "jpeg") -> "image/jpeg"
             extension == "png" -> "image/png"
             extension == "webp" -> "image/webp"
-            else -> error("Format $name belum didukung. Gunakan PDF, JPG, PNG, WEBP, atau GIF.")
+            else -> error("Format $name belum didukung. Gunakan PDF, JPG, PNG, atau WEBP.")
         }
         val bytes = contentResolver.openInputStream(uri)?.use { stream ->
             val output = ByteArrayOutputStream()
