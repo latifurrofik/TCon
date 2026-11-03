@@ -23,6 +23,7 @@
 - Streaming responses, continuous/full-duplex voice, hands-free turn detection, robust audio-focus arbitration, and selectable distinct TTS voices.
 - Binary document and media ingestion: PDF, DOCX, XLSX, images, audio, and video are not supported yet. Current text attachments are temporary in-memory context, not original binary uploads or durable project files.
 - Automatic memory extraction/summarization and artifact management; project memory is currently a simple user-managed notes store.
+- Task due-date editing, reminders/notifications, and task workflow automation.
 - Task board, workflow automation, notifications, and in-app update mechanism.
 - Automatic reading of responses from consumer ChatGPT/Gemini/Claude apps (not exposed through the handoff intents).
 
