@@ -26,12 +26,11 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # GitHub-hosted Ubuntu runners already include the Android SDK.
-      # Avoid setup-android's default legacy "tools" package, which no longer exists.
-      - name: Install Android SDK components
-        run: |
-          yes | sdkmanager --licenses
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          # Explicit packages; do not request the obsolete legacy "tools" package.
+          packages: "platform-tools platforms;android-35 build-tools;35.0.0"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
