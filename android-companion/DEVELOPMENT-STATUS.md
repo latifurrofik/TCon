@@ -18,7 +18,7 @@
 - Unit tests for orchestration order, transcript propagation, turn/length bounds, provider failure handling, and repeated participant rounds.
 
 ## Not implemented yet
-- Build/test validation on GitHub Actions or a physical Android device.
+- Build/test validation on GitHub Actions or a physical Android device; a manual-only debug build workflow has been added but has not been started.
 - Streaming responses, continuous/full-duplex voice, hands-free turn detection, robust audio-focus arbitration, and selectable distinct TTS voices.
 - Binary document and media ingestion: PDF, DOCX, XLSX, images, audio, and video are not supported yet. Current text attachments are temporary in-memory context, not original binary uploads or durable project files.
 - Automatic memory extraction/summarization and artifact management; project memory is currently a simple user-managed notes store.
@@ -29,4 +29,4 @@
 Official consumer app subscriptions do not automatically include API credits. Direct API adapters require separate provider API keys and can incur charges. The app asks for confirmation before an API discussion. Manual app handoff remains available without API keys.
 
 ## Validation status
-No GitHub Actions workflow has been started from this development branch. Voice behavior also requires real-device testing with the Android speech service and TTS engine. Run the debug build and unit tests only after the user approves workflow execution. Review provider model IDs and API behavior against current provider documentation before production use.
+The manual-only Android debug workflow is present at `.github/workflows/android-debug.yml`; it runs `testDebugUnitTest` and `assembleDebug`, then publishes the debug APK and test reports as artifacts. It has not been started. Voice behavior still requires real-device testing with the Android speech service and TTS engine. Review provider model IDs and API behavior against current provider documentation before production use.
