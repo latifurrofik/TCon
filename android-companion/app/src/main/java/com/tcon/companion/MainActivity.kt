@@ -105,6 +105,11 @@ class MainActivity : Activity() {
         addButton(root, "Bagikan instruksi ke aplikasi AI") { sharePrompt() }
         addButton(root, "Input instruksi dengan suara") { startVoiceInput() }
         addButton(root, "Hentikan input / suara AI") { stopVoiceFeatures() }
+        root.addView(TextView(this).apply {
+            text = "Mode suara saat ini push-to-talk: mikrofon hanya aktif setelah tombol ditekan. TCon memakai layanan speech recognition Android untuk mengubah ucapan menjadi teks, lalu membacakan jawaban AI dengan TTS. Ini belum full-duplex atau hands-free."
+            textSize = 12f
+            setPadding(0, 4, 0, 10)
+        })
         addButton(root, "Mulai diskusi dengan AI yang terhubung") { confirmAndStartMeeting() }
         addButton(root, "Hentikan diskusi") {
             meetingJob?.cancel()
@@ -134,6 +139,7 @@ class MainActivity : Activity() {
     }
 
     override fun onPause() {
+        speechRecognizer?.cancel()
         if (::promptInput.isInitialized) {
             getPreferences(MODE_PRIVATE).edit()
                 .putString(KEY_PROMPT, promptInput.text.toString())
