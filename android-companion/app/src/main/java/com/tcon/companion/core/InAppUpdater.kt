@@ -42,7 +42,6 @@ class InAppUpdater(private val context: Context) {
         private const val FILE_PROVIDER_AUTHORITY = "com.tcon.companion.fileprovider"
         private const val MAX_APK_BYTES = 150L * 1024L * 1024L
         private const val DOWNLOAD_TIMEOUT_MS = 15L * 60L * 1000L
-        private val VERSION_PATTERN = Regex("(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)")
     }
 
     suspend fun checkLatest(): TConUpdate? = withContext(Dispatchers.IO) {
@@ -68,15 +67,15 @@ class InAppUpdater(private val context: Context) {
             }
 
             val tag = release.optString("tag_name").removePrefix("v").trim()
-            require(VERSION_PATTERN.matches(tag)) { "Tag versi rilis tidak valid." }
+            require(TConVersioning.isValid(tag)) { "Tag versi rilis tidak valid." }
             val installed = context.packageManager.getPackageInfo(context.packageName, 0)
             val currentName = installed.versionName ?: "0.0.0"
-            val candidateCode = versionCodeFor(tag)
+            val candidateCode = TConVersioning.versionCodeFor(tag)
             val installedCode = if (android.os.Build.VERSION.SDK_INT >= 28) installed.longVersionCode else {
                 @Suppress("DEPRECATION")
                 installed.versionCode.toLong()
             }
-            if (compareVersions(tag, currentName) <= 0 || candidateCode <= installedCode) return@withContext null
+            if (TConVersioning.compare(tag, currentName) <= 0 || candidateCode <= installedCode) return@withContext null
 
             val assets = release.optJSONArray("assets") ?: error("Rilis belum memiliki file APK.")
             var selected: JSONObject? = null
@@ -254,16 +253,6 @@ class InAppUpdater(private val context: Context) {
         }
     }
 
-    private fun versionCodeFor(version: String): Long {
-        val parts = version.split('.').map { it.toLongOrNull() ?: error("Versi rilis tidak valid.") }
-        require(parts.size == 3 && parts[0] <= 2147 && parts[1] <= 999 && parts[2] <= 999) {
-            "Versi rilis berada di luar rentang versionCode TCon."
-        }
-        val code = parts[0] * 1_000_000L + parts[1] * 1_000L + parts[2]
-        require(code in 2L..2_100_000_000L) { "Versi rilis berada di luar rentang versionCode Android." }
-        return code
-    }
-
     private fun sha256(file: File): String {
         val digest = MessageDigest.getInstance("SHA-256")
         file.inputStream().buffered().use { input ->
@@ -277,14 +266,5 @@ class InAppUpdater(private val context: Context) {
         return digest.digest().joinToString("") { byte -> "%02x".format(byte.toInt() and 0xff) }
     }
 
-    private fun compareVersions(left: String, right: String): Int {
-        val a = left.split('.', '-', '+').map { it.toIntOrNull() ?: 0 }
-        val b = right.split('.', '-', '+').map { it.toIntOrNull() ?: 0 }
-        for (index in 0 until maxOf(a.size, b.size)) {
-            val diff = a.getOrElse(index) { 0 }.compareTo(b.getOrElse(index) { 0 })
-            if (diff != 0) return diff
-        }
-        return 0
-    }
 
 }
