@@ -48,6 +48,9 @@ class InAppUpdater(private val context: Context) {
         }
         try {
             val status = connection.responseCode
+            if (status == HttpURLConnection.HTTP_NOT_FOUND) {
+                error("Belum ada rilis stabil TCon di GitHub. Pembaruan akan tersedia setelah APK release pertama dipublikasikan.")
+            }
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
             val body = stream.bufferedReader().use { it.readText() }
             require(status in 200..299) { "GitHub merespons HTTP $status." }
@@ -67,7 +70,8 @@ class InAppUpdater(private val context: Context) {
                 val asset = assets.getJSONObject(index)
                 val name = asset.optString("name")
                 val url = asset.optString("browser_download_url")
-                if (name.endsWith(".apk", ignoreCase = true) && url.startsWith("https://github.com/")) {
+                if (name.endsWith(".apk", ignoreCase = true) &&
+                    url.startsWith("https://github.com/latifurrofik/TCon/releases/download/")) {
                     apkName = name
                     apkUrl = url
                     break
