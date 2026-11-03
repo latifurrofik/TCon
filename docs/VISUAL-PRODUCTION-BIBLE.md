@@ -2,7 +2,7 @@
 ## Series: Disetir Media Sosial
 
 **Status:** Approved visual standard  
-**Version:** 1.0  
+**Version:** 2.0  
 **Applies to:** The 15-episode *Disetir Media Sosial* YouTube Shorts series and its reusable visual assets.
 
 This document is the source of truth for visual design, image generation, storyboard direction, and Remotion animation for this series. Episode-specific story decisions may vary, but must remain inside this visual identity unless a later version is explicitly approved.
@@ -11,7 +11,7 @@ This document is the source of truth for visual design, image generation, storyb
 
 The series explains how social media platforms and recommendation algorithms can shape attention, emotion, habits, choices, and perception.
 
-The visual language is **balanced editorial 2D**:
+The visual language is **simple 3D educational motion graphics**:
 - informative, modern, approachable, and visually engaging;
 - serious enough for critical topics, without making every scene gloomy or frightening;
 - expressive and metaphorical, but easy to understand at a glance;
@@ -30,18 +30,19 @@ Avoid both extremes: do not make the series uniformly dark and ominous, and do n
 - Keep body proportions and rendering style consistent within a scene.
 - People should remain relatable and human, not robotic by default.
 
-## 3. Illustration treatment
+## 3. 3D motion-graphics treatment
 
-**Approved direction: hybrid editorial 2D.**
+**Approved direction: simple, stylized 3D built procedurally with Three.js and React Three Fiber.**
 
-- Foreground characters and important objects: simplified, clean silhouettes and readable shapes.
-- Midground: supporting props, interface fragments, symbolic elements, and environmental details.
-- Background: more detailed atmospheric spaces with controlled depth and perspective.
-- Use layered shadows, gradients, subtle texture, soft grain, restrained glow, and atmospheric light.
-- Keep edges and object boundaries clear enough for independent animation and compositing.
-- Do not use photorealism, 3D-render aesthetics, anime styling, or painterly noise that obscures the subject.
+- Prefer geometric forms, rounded primitives, simple symbolic objects, abstract spaces, and clean layered environments.
+- Use readable materials, controlled roughness/metalness, soft shadows, gradients, and purposeful lighting.
+- Keep scenes lightweight: a few focal objects, restrained particles, simple geometry, and limited material complexity.
+- Use camera movement (push, pull, orbit, tracking) only when it clarifies the idea.
+- Use depth, scale, and spatial relationships to explain abstract mechanisms.
+- Avoid photorealism, detailed character modeling, anime styling, excessive polygons, noisy textures, and generic corporate infographic layouts.
+- 2D typography, captions, labels, and interface-like overlays should be composed in Remotion above the 3D scene, not baked into textures.
 
-The image should feel like a polished editorial illustration, not a screenshot of an app and not a flat slide deck.
+The result should feel like a polished educational motion-graphics sequence: clearly three-dimensional, but intentionally simple and fast to render.
 
 ## 4. Color system
 
@@ -161,18 +162,16 @@ Motion principles:
 
 ## 11. Prompt template
 
-Use this as a reusable base. Replace the scene description and shot-specific direction for every storyboard frame.
+Use this as a reusable direction for procedural 3D scenes. Replace the scene description and shot-specific direction for every storyboard frame. Use image-generation prompts only when a scene genuinely requires an external raster asset; 3D geometry is the default visual source.
 
 ```text
-Create a portrait 9:16 (1080x1920) hybrid editorial 2D illustration
-for an Indonesian educational YouTube Shorts series about social media
-and recommendation algorithms.
+Create a portrait 9:16 (1080x1920) simple stylized 3D educational motion-graphics scene
+for an Indonesian YouTube Shorts series about social media and recommendation algorithms.
 
 VISUAL IDENTITY:
 Balanced editorial mood: modern, informative, approachable, thoughtful.
-Symbolic anonymous human figures, without a fixed recurring protagonist.
-Simplified clean foreground characters and key objects.
-More detailed atmospheric background with clear visual depth.
+Use simple geometric 3D forms, symbolic objects, clear spatial depth,
+controlled lighting, clean materials, and restrained camera movement.
 Core palette: deep navy #101B2A, slate #263B49, cyan #20B8CC,
 coral #F07859, warm ivory #E9E5DC. Use accents selectively.
 
@@ -187,12 +186,12 @@ STORY MEANING:
 [Explain what the viewer should understand from this image.]
 
 ANIMATION READINESS:
-Separate readable visual elements where possible.
-Keep important silhouettes and object boundaries clean.
-Avoid unnecessary overlaps. Do not bake captions into the image.
+Build the scene from independently controllable 3D objects where practical.
+Keep the focal silhouette readable and avoid unnecessary overlaps.
+Compose captions and typography in Remotion, not inside 3D textures.
 
 RESTRICTIONS:
-No photorealism, no 3D render, no anime, no random text,
+No photorealism, no anime, no random text,
 no watermark, no unrelated logos, no generic decorative clutter.
 ```
 
@@ -200,7 +199,7 @@ no watermark, no unrelated logos, no generic decorative clutter.
 
 Before an image is accepted:
 - [ ] Does it communicate the intended narration beat?
-- [ ] Does it follow symbolic human + hybrid editorial 2D direction?
+- [ ] Does it follow the simple 3D educational motion-graphics direction?
 - [ ] Does it feel balanced rather than uniformly dark or childish?
 - [ ] Is the focal point immediately understandable?
 - [ ] Is the composition readable in portrait mobile format?
@@ -219,8 +218,19 @@ Before a video is approved:
 
 ## 13. Governance and versioning
 
-- This v1.0 standard applies to the *Disetir Media Sosial* series.
+- This v2.0 standard applies to the *Disetir Media Sosial* series.
 - Episode storyboards may adapt composition, lighting, and accent colors to the subject.
-- A change to the core character direction, illustration style, palette, or video format requires a new approved version.
+- A change to the core 3D direction, palette, or video format requires a new approved version.
 - Generated assets are proposals until reviewed; uncertain assets stay in `PERLU_REVIEW`.
 - No image or video is published to YouTube automatically. Publishing requires explicit user approval for that specific final render.
+
+
+## 14. Three.js and Remotion implementation rules (v2.0)
+
+- Use Three.js through `@remotion/three` and React Three Fiber for procedural 3D scenes.
+- Wrap 3D scenes in `ThreeCanvas` with explicit `width` and `height`.
+- Drive every animation from Remotion `useCurrentFrame()` and `interpolate()`; do not use React Three Fiber `useFrame()`, timers, random animation, or autonomous render loops.
+- Keep narration, subtitles, title typography, and timeline orchestration in Remotion.
+- Prefer geometry and materials over generated images for reusable abstract visuals.
+- For GitHub Actions on Remotion 4, use a software-compatible Chromium WebGL backend such as `--gl=swiftshader`; expect slower renders and inspect the MP4 artifact.
+- Treat the first prototype as a feasibility test. Do not replace the existing production composition until the prototype renders correctly and is reviewed.

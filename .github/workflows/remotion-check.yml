@@ -33,4 +33,13 @@ jobs:
       - name: TypeScript check
         run: npm run typecheck
       - name: List Remotion compositions
-        run: npx remotion compositions src/index.ts
+        run: npx remotion compositions src/index.ts --gl=swiftshader
+      - name: Render 10-second Three.js prototype
+        run: npm run render:three:prototype
+      - name: Upload Three.js preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: tcon-threejs-prototype
+          path: out/three-prototype.mp4
+          if-no-files-found: error
+          retention-days: 7
