@@ -3,6 +3,7 @@ package com.tcon.companion
 import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
+import android.app.DatePickerDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
@@ -22,6 +23,8 @@ import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.NumberPicker
 import android.widget.ScrollView
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 import android.widget.TextView
 import android.widget.Toast
 import com.tcon.companion.core.AiMessage
@@ -39,6 +42,7 @@ import com.tcon.companion.core.ProviderId
 import com.tcon.companion.core.TextAttachment
 import com.tcon.companion.core.TextAttachmentReader
 import com.tcon.companion.core.TaskStatus
+import com.tcon.companion.core.TaskPriority
 import com.tcon.companion.core.TConTask
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -51,6 +55,7 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Calendar
 
 class MainActivity : Activity() {
     private lateinit var promptInput: EditText
@@ -322,7 +327,14 @@ class MainActivity : Activity() {
         if (openTasks.isNotEmpty()) {
             append("TUGAS PROYEK YANG MASIH TERBUKA (data referensi):\n")
             openTasks.take(20).forEach { task ->
-                append("- [${task.status.name}] ${task.title}")
+                val priorityLabel = when (task.priority) {
+                    TaskPriority.LOW -> "Rendah"
+                    TaskPriority.MEDIUM -> "Sedang"
+                    TaskPriority.HIGH -> "Tinggi"
+                    TaskPriority.URGENT -> "Mendesak"
+                }
+                val dueLabel = task.dueAt?.let { SimpleDateFormat("dd MMM yyyy", Locale("id", "ID")).format(Date(it)) } ?: "Belum ditentukan"
+                append("- [${task.status.name}] [Prioritas: $priorityLabel] [Deadline: $dueLabel] ${task.title}")
                 if (task.details.isNotBlank()) append(": ${task.details.take(250)}")
                 append("\n")
             }
@@ -749,7 +761,14 @@ class MainActivity : Activity() {
                 TaskStatus.IN_PROGRESS -> "Dikerjakan"
                 TaskStatus.DONE -> "Selesai"
             }
-            "$status · ${task.title}"
+            val priority = when (task.priority) {
+                TaskPriority.LOW -> "Rendah"
+                TaskPriority.MEDIUM -> "Sedang"
+                TaskPriority.HIGH -> "Tinggi"
+                TaskPriority.URGENT -> "Mendesak"
+            }
+            val due = task.dueAt?.let { SimpleDateFormat("dd/MM/yyyy", Locale("id", "ID")).format(Date(it)) } ?: "Tanpa deadline"
+            "$status · $priority · $due · ${task.title}"
         }
         AlertDialog.Builder(this)
             .setTitle("Tugas proyek (${tasks.size})")
@@ -777,8 +796,59 @@ class MainActivity : Activity() {
             gravity = Gravity.TOP or Gravity.START
             setText(task?.details.orEmpty())
         }
+        val priorities = TaskPriority.values()
+        val prioritySpinner = Spinner(this).apply {
+            adapter = ArrayAdapter(
+                this@MainActivity,
+                android.R.layout.simple_spinner_dropdown_item,
+                priorities.map { priority ->
+                    when (priority) {
+                        TaskPriority.LOW -> "Rendah"
+                        TaskPriority.MEDIUM -> "Sedang"
+                        TaskPriority.HIGH -> "Tinggi"
+                        TaskPriority.URGENT -> "Mendesak"
+                    }
+                }
+            )
+            setSelection(priorities.indexOf(task?.priority ?: TaskPriority.MEDIUM).coerceAtLeast(0))
+        }
+        var dueAt = task?.dueAt
+        val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+        val deadlineButton = Button(this).apply {
+            text = dueAt?.let { "Deadline: ${dateFormat.format(Date(it))}" } ?: "Pilih tanggal deadline"
+        }
+        val clearDeadlineButton = Button(this).apply { text = "Hapus deadline" }
+        deadlineButton.setOnClickListener {
+            val initial = dueAt?.let { Calendar.getInstance().apply { timeInMillis = it } } ?: Calendar.getInstance()
+            DatePickerDialog(
+                this@MainActivity,
+                { _, year, month, day ->
+                    dueAt = Calendar.getInstance().apply {
+                        set(Calendar.YEAR, year)
+                        set(Calendar.MONTH, month)
+                        set(Calendar.DAY_OF_MONTH, day)
+                        set(Calendar.HOUR_OF_DAY, 0)
+                        set(Calendar.MINUTE, 0)
+                        set(Calendar.SECOND, 0)
+                        set(Calendar.MILLISECOND, 0)
+                    }.timeInMillis
+                    deadlineButton.text = "Deadline: ${dateFormat.format(Date(dueAt!!))}"
+                },
+                initial.get(Calendar.YEAR),
+                initial.get(Calendar.MONTH),
+                initial.get(Calendar.DAY_OF_MONTH)
+            ).show()
+        }
+        clearDeadlineButton.setOnClickListener {
+            dueAt = null
+            deadlineButton.text = "Pilih tanggal deadline"
+        }
         form.addView(titleInput)
         form.addView(detailsInput)
+        form.addView(TextView(this).apply { text = "Prioritas tugas"; textSize = 13f })
+        form.addView(prioritySpinner)
+        form.addView(deadlineButton)
+        form.addView(clearDeadlineButton)
         AlertDialog.Builder(this)
             .setTitle(if (task == null) "Tambah tugas" else "Edit tugas")
             .setView(form)
@@ -788,9 +858,10 @@ class MainActivity : Activity() {
                 if (title.isBlank()) {
                     toast("Judul tugas wajib diisi.")
                 } else {
+                    val priority = priorities[prioritySpinner.selectedItemPosition]
                     runCatching {
-                        if (task == null) meetingHistoryStore.addTask(title, details)
-                        else meetingHistoryStore.updateTask(task.id, title, details, task.dueAt)
+                        if (task == null) meetingHistoryStore.addTask(title, details, dueAt, priority)
+                        else meetingHistoryStore.updateTask(task.id, title, details, dueAt, priority)
                     }.onSuccess {
                         toast("Tugas disimpan.")
                     }.onFailure {
