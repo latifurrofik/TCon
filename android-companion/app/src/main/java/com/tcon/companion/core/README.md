@@ -1,7 +1,9 @@
 # Android core module
 
 - `AiModels.kt`: provider identities, transcript messages, and bounded meeting configuration.
-- `AiProvider.kt`: adapter contract and declared capabilities.
-- `MeetingOrchestrator.kt`: sequential, bounded discussion coordinator with dependency injection.
+- `AiProvider.kt`: provider-neutral adapter contract and declared capabilities.
+- `MeetingOrchestrator.kt`: sequential discussion coordinator with bounded rounds and response lengths.
+- `ApiKeyVault.kt`: AES-GCM encryption at rest with Android Keystore-managed keys.
+- `ProviderApiClient.kt`: optional official API adapter for OpenAI Responses, Gemini generateContent, and Anthropic Messages.
 
-No network client or provider credential is included yet. OpenAI, Gemini, and Anthropic adapters must be implemented separately using official APIs and explicit user configuration. Android app handoff is a separate assisted mode and must not be represented as automatic response retrieval.
+Provider adapters require user-configured API keys and model IDs. API calls can incur charges; consumer app subscriptions are not assumed to include API usage. The Android app handoff is a separate assisted mode and does not retrieve app conversations.
