@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Environment
+import android.os.SystemClock
 import android.provider.Settings
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.Dispatchers
@@ -15,17 +16,20 @@ import org.json.JSONObject
 import java.io.File
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.MessageDigest
 
 data class TConUpdate(
     val version: String,
     val notes: String,
     val apkUrl: String,
-    val apkName: String
+    val apkName: String,
+    val expectedSize: Long,
+    val sha256: String
 )
 
 /**
- * Checks the official GitHub Releases endpoint and downloads a release APK.
- * Android Package Installer remains responsible for signature verification and installation.
+ * Checks the public GitHub Releases API and verifies the downloaded APK digest.
+ * Android Package Installer performs the final package/signature validation.
  */
 class InAppUpdater(private val context: Context) {
     companion object {
@@ -35,6 +39,8 @@ class InAppUpdater(private val context: Context) {
         private const val KEY_DOWNLOAD_ID = "download_id"
         private const val KEY_PENDING_INSTALL = "pending_install_path"
         private const val FILE_PROVIDER_AUTHORITY = "com.tcon.companion.fileprovider"
+        private const val MAX_APK_BYTES = 150L * 1024L * 1024L
+        private const val DOWNLOAD_TIMEOUT_MS = 15L * 60L * 1000L
     }
 
     suspend fun checkLatest(): TConUpdate? = withContext(Dispatchers.IO) {
@@ -43,50 +49,73 @@ class InAppUpdater(private val context: Context) {
             connectTimeout = 12_000
             readTimeout = 12_000
             setRequestProperty("Accept", "application/vnd.github+json")
-            setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
+            setRequestProperty("X-GitHub-Api-Version", "2026-03-10")
             setRequestProperty("User-Agent", "TCon-Android-Updater")
         }
         try {
             val status = connection.responseCode
             if (status == HttpURLConnection.HTTP_NOT_FOUND) {
-                error("Belum ada rilis stabil TCon di GitHub. Pembaruan akan tersedia setelah APK release pertama dipublikasikan.")
+                error("Belum ada rilis stabil TCon di GitHub. Pembaruan tersedia setelah APK release pertama dipublikasikan.")
             }
             val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-            val body = stream.bufferedReader().use { it.readText() }
+            val body = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
             require(status in 200..299) { "GitHub merespons HTTP $status." }
             val release = JSONObject(body)
             require(!release.optBoolean("draft") && !release.optBoolean("prerelease")) {
                 "Rilis terbaru belum stabil atau masih draft."
             }
+
             val tag = release.optString("tag_name").removePrefix("v").trim()
-            require(tag.isNotBlank()) { "Tag versi rilis tidak ditemukan." }
+            require(VERSION_PATTERN.matches(tag)) { "Tag versi rilis tidak valid." }
             val current = context.packageManager.getPackageInfo(context.packageName, 0).versionName ?: "0.0.0"
             if (compareVersions(tag, current) <= 0) return@withContext null
 
             val assets = release.optJSONArray("assets") ?: error("Rilis belum memiliki file APK.")
-            var apkUrl: String? = null
-            var apkName: String? = null
+            var selected: JSONObject? = null
             for (index in 0 until assets.length()) {
                 val asset = assets.getJSONObject(index)
                 val name = asset.optString("name")
                 val url = asset.optString("browser_download_url")
                 if (name.endsWith(".apk", ignoreCase = true) &&
                     url.startsWith("https://github.com/latifurrofik/TCon/releases/download/")) {
-                    apkName = name
-                    apkUrl = url
+                    selected = asset
                     break
                 }
             }
-            require(!apkUrl.isNullOrBlank() && !apkName.isNullOrBlank()) {
-                "Rilis $tag belum menyertakan APK. Pengelola repository perlu mengunggah APK release."
+            val asset = selected ?: error("Rilis $tag belum menyertakan APK.")
+            val size = asset.optLong("size", -1L)
+            require(size in 1..MAX_APK_BYTES) { "Ukuran APK tidak valid atau melebihi batas 150 MB." }
+            val digest = asset.optString("digest")
+            require(digest.matches(Regex("sha256:[a-fA-F0-9]{64}"))) {
+                "Rilis tidak menyediakan SHA-256 APK. Unduhan dibatalkan demi keamanan."
             }
-            TConUpdate(tag, release.optString("body"), apkUrl!!, apkName!!)
+
+            TConUpdate(
+                version = tag,
+                notes = release.optString("body"),
+                apkUrl = asset.getString("browser_download_url"),
+                apkName = asset.getString("name"),
+                expectedSize = size,
+                sha256 = digest.substringAfter(':').lowercase()
+            )
         } finally {
             connection.disconnect()
         }
     }
 
     suspend fun downloadAndInstall(activity: Activity, update: TConUpdate) {
+        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val previousId = prefs.getLong(KEY_DOWNLOAD_ID, -1L)
+        if (previousId >= 0L) manager.remove(previousId)
+
+        val apkFile = File(
+            context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
+            "TCon-update.apk"
+        )
+        apkFile.parentFile?.mkdirs()
+        if (apkFile.exists()) apkFile.delete()
+
         val downloadId = withContext(Dispatchers.IO) {
             val request = DownloadManager.Request(Uri.parse(update.apkUrl))
                 .setTitle("Memperbarui TCon")
@@ -98,45 +127,60 @@ class InAppUpdater(private val context: Context) {
                 .setDestinationInExternalFilesDir(
                     context, Environment.DIRECTORY_DOWNLOADS, "TCon-update.apk"
                 )
-            val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             manager.enqueue(request).also {
-                context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                    .edit().putLong(KEY_DOWNLOAD_ID, it).apply()
+                prefs.edit().putLong(KEY_DOWNLOAD_ID, it).apply()
             }
         }
 
-        val manager = context.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        while (true) {
-            val query = DownloadManager.Query().setFilterById(downloadId)
-            val cursor = manager.query(query)
-            val (status, reason) = cursor.use {
-                require(it.moveToFirst()) { "Unduhan tidak ditemukan." }
-                it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) to
-                    it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+        try {
+            val deadline = SystemClock.elapsedRealtime() + DOWNLOAD_TIMEOUT_MS
+            while (true) {
+                check(SystemClock.elapsedRealtime() < deadline) {
+                    "Unduhan melewati batas 15 menit. Periksa koneksi lalu coba lagi."
+                }
+                val cursor = manager.query(DownloadManager.Query().setFilterById(downloadId))
+                val (status, reason) = cursor.use {
+                    require(it.moveToFirst()) { "Unduhan tidak ditemukan." }
+                    it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS)) to
+                        it.getInt(it.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON))
+                }
+                when (status) {
+                    DownloadManager.STATUS_SUCCESSFUL -> break
+                    DownloadManager.STATUS_FAILED -> error("Unduhan gagal (kode $reason).")
+                    DownloadManager.STATUS_PAUSED -> error("Unduhan dijeda (kode $reason). Coba lagi saat koneksi stabil.")
+                }
+                delay(700)
             }
-            when (status) {
-                DownloadManager.STATUS_SUCCESSFUL -> break
-                DownloadManager.STATUS_FAILED -> error("Unduhan gagal (kode $reason).")
-                DownloadManager.STATUS_PAUSED -> error("Unduhan dijeda (kode $reason).")
-            }
-            delay(700)
-        }
 
-        val apkFile = File(
-            context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),
-            "TCon-update.apk"
-        )
-        require(apkFile.exists() && apkFile.length() > 0L) { "File APK hasil unduhan tidak ditemukan." }
-        installOrRequestPermission(activity, apkFile)
+            require(apkFile.exists() && apkFile.isFile) { "File APK hasil unduhan tidak ditemukan." }
+            require(apkFile.length() == update.expectedSize) {
+                "Ukuran APK tidak cocok dengan metadata GitHub. File ditolak."
+            }
+            val actualDigest = withContext(Dispatchers.IO) { sha256(apkFile) }
+            require(actualDigest == update.sha256) {
+                "Verifikasi SHA-256 gagal. APK tidak akan dipasang."
+            }
+            prefs.edit().remove(KEY_DOWNLOAD_ID).apply()
+            installOrRequestPermission(activity, apkFile)
+        } catch (error: Exception) {
+            manager.remove(downloadId)
+            prefs.edit().remove(KEY_DOWNLOAD_ID).apply()
+            apkFile.delete()
+            throw error
+        }
     }
 
     fun resumePendingInstall(activity: Activity) {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val path = prefs.getString(KEY_PENDING_INSTALL, null) ?: return
         if (!activity.packageManager.canRequestPackageInstalls()) return
-        prefs.edit().remove(KEY_PENDING_INSTALL).apply()
         val file = File(path)
-        if (file.exists()) launchInstaller(activity, file)
+        if (!file.exists() || !file.isFile || file.length() <= 0L) {
+            prefs.edit().remove(KEY_PENDING_INSTALL).apply()
+            return
+        }
+        prefs.edit().remove(KEY_PENDING_INSTALL).apply()
+        launchInstaller(activity, file)
     }
 
     private fun installOrRequestPermission(activity: Activity, apkFile: File) {
@@ -164,13 +208,30 @@ class InAppUpdater(private val context: Context) {
         activity.startActivity(intent)
     }
 
+    private fun sha256(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        file.inputStream().buffered().use { input ->
+            val buffer = ByteArray(32 * 1024)
+            while (true) {
+                val count = input.read(buffer)
+                if (count < 0) break
+                digest.update(buffer, 0, count)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
     private fun compareVersions(left: String, right: String): Int {
         val a = left.split('.', '-', '+').map { it.toIntOrNull() ?: 0 }
         val b = right.split('.', '-', '+').map { it.toIntOrNull() ?: 0 }
         for (index in 0 until maxOf(a.size, b.size)) {
-            val diff = (a.getOrElse(index) { 0 }).compareTo(b.getOrElse(index) { 0 })
+            val diff = a.getOrElse(index) { 0 }.compareTo(b.getOrElse(index) { 0 })
             if (diff != 0) return diff
         }
         return 0
+    }
+
+    private companion object VersionRules {
+        val VERSION_PATTERN = Regex("\\d+\\.\\d+\\.\\d+")
     }
 }
