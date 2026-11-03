@@ -17,6 +17,7 @@ TCon is an Android-first workspace for collaboration between ChatGPT (OpenAI), G
 - Unit tests for orchestration order, transcript propagation, turn/length bounds, and provider failure handling.
 - Indonesian push-to-talk speech recognition using the Android speech service.
 - Sequential AI response playback through Android TextToSpeech, with pitch differences to distinguish speakers.
+- In-app update checker: checks the latest stable GitHub Release, compares semantic version tags, downloads its APK with Android DownloadManager, and opens the Android package installer through a private FileProvider URI. Installation always remains under Android/user control.
 
 ## Build
 Open this directory in Android Studio, sync Gradle, and run the `app` configuration.
@@ -29,8 +30,25 @@ Requirements: JDK 17, Android SDK Platform 35, Android 8.0 (API 26) or newer.
 - App handoff does not read replies from ChatGPT, Gemini, or Claude consumer apps. Automatic discussion uses the optional official API adapters.
 - Voice is currently push-to-talk and sequential TTS, not continuous full-duplex or hands-free conversation. Distinct AI speakers currently use pitch differences, not guaranteed separate natural voices.
 - DOCX/XLSX extraction covers document text and worksheet cell values only; embedded images, charts, macros, formulas without cached values, and complex layout are not interpreted. Audio and video are not supported. PDF and JPEG/PNG/WebP files are held temporarily in memory and sent as base64 request content to selected provider APIs; files are not stored in meeting history or retained after the app session. Provider API pricing and model modality support still apply.
-- Streaming, automatic memory extraction/summarization, task automation, and in-app updates are not implemented yet. Meeting history and manually managed project notes are stored locally on the device.
+- Streaming and automatic memory extraction/summarization are not implemented yet. Meeting history and manually managed project notes are stored locally on the device.
+- The updater requires a published stable GitHub Release containing a signed `.apk` asset. The first installed release and every later update must use the same permanent signing key; Android rejects APK updates signed with a different key. A debug APK is not suitable as the production update baseline.
 - The Claude app package ID is configured as `com.anthropic.claude`; verify on the target phone.
+
+## In-app updates and publishing releases
+
+The home screen's **Periksa pembaruan TCon** button checks:
+`https://api.github.com/repos/latifurrofik/TCon/releases/latest`.
+Only stable, non-draft GitHub Releases are considered. The release tag (for example `v0.1.1`) is compared with the installed `versionName`. The release must include an APK asset. The user confirms the download, Android DownloadManager downloads it, and Android's package installer handles the final installation. If Android requests permission to install unknown apps, enable it for TCon in system settings and return to TCon.
+
+A signed-release workflow is available at `.github/workflows/android-release.yml` and is **manual only**. Before using it, configure these GitHub Actions Secrets:
+- `TCON_RELEASE_KEYSTORE_BASE64`: Base64 content of the permanent JKS keystore.
+- `TCON_RELEASE_STORE_PASSWORD`: keystore password.
+- `TCON_RELEASE_KEY_ALIAS`: key alias.
+- `TCON_RELEASE_KEY_PASSWORD`: key password.
+
+Create and back up the permanent signing keystore securely. Never commit it or paste it into chat. The release workflow accepts `version_name`, an increasing integer `version_code`, a matching tag such as `v0.1.1`, and optional release notes. It runs tests, builds the signed APK, and publishes the APK as a GitHub Release asset. Do not run the release workflow until the signing secrets are configured and the release has been reviewed.
+
+**Important:** install the first production build from a signed GitHub Release. A locally installed debug APK will normally have a different signing key and cannot be upgraded in place by the production-signed APK. Every production release must use the same permanent JKS key and a higher `version_code`.
 
 ## Security principles
 - Microphone permission is requested only when the user taps voice input. Audio recognition is delegated to the Android speech-recognition service; its data handling depends on the selected device/service.
