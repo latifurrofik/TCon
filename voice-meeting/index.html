@@ -4,83 +4,47 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#101522">
-  <meta name="description" content="AI Voice Meeting — fondasi antarmuka diskusi dua AI dari Android.">
-  <title>AI Voice Meeting | TCon</title>
+  <meta name="description" content="AI Image Director — alur kerja ChatGPT dan Gemini untuk membuat serta merevisi gambar.">
+  <title>AI Image Director | TCon</title>
   <link rel="stylesheet" href="./styles.css">
 </head>
 <body>
   <main class="app-shell">
     <header class="topbar">
-      <a class="brand" href="./" aria-label="AI Voice Meeting">
+      <a class="brand" href="./" aria-label="AI Image Director">
         <span class="brand-mark">◎</span>
-        <span><strong>AI Voice Meeting</strong><small>by TCon</small></span>
+        <span><strong>AI Image Director</strong><small>by TCon</small></span>
       </a>
-      <span class="stage-pill"><i></i> FOUNDATION</span>
+      <span class="stage-pill"><i></i> ANDROID MVP</span>
     </header>
-
     <section class="intro">
-      <p class="eyebrow">RUANG DISKUSI AI</p>
-      <h1>Dua pemikir.<br><span>Satu percakapan.</span></h1>
-      <p class="subhead">Siapkan topik, lalu dengarkan simulasi moderator dan dua peserta dengan suara berbeda.</p>
+      <p class="eyebrow">CHATGPT × GEMINI</p>
+      <h1>ChatGPT mengarahkan.<br><span>Gemini membuat gambar.</span></h1>
+      <p class="subhead">Gunakan ChatGPT sebagai sutradara visual dan aplikasi Gemini sebagai pembuat gambar. Instruksi bisa disalin lalu diteruskan ke Gemini.</p>
     </section>
-
-    <section class="meeting-card" aria-labelledby="meeting-title">
+    <section class="meeting-card" aria-labelledby="director-title">
       <div class="card-heading">
-        <div><p class="eyebrow">MEETING ROOM</p><h2 id="meeting-title">Diskusi terbuka</h2></div>
+        <div><p class="eyebrow">IMAGE WORKSPACE</p><h2 id="director-title">Instruksi untuk Gemini</h2></div>
         <span id="status" class="status"><i></i> Siap</span>
       </div>
-
-      <label class="field-label" for="topic">Topik diskusi</label>
-      <textarea id="topic" rows="3" maxlength="500">Apakah kecerdasan buatan akan menggantikan pekerjaan manusia?</textarea>
-
-      <div class="participants">
-        <article class="participant participant-a">
-          <div class="avatar avatar-a">GPT</div>
-          <div class="participant-copy"><strong>ChatGPT</strong><span>Peserta A · Suara 1</span></div>
-          <span class="voice-dot"></span>
-        </article>
-        <article class="participant participant-b">
-          <div class="avatar avatar-b">G</div>
-          <div class="participant-copy"><strong>Gemini</strong><span>Peserta B · Suara 2</span></div>
-          <span class="voice-dot"></span>
-        </article>
-      </div>
-
-      <div class="api-settings">
-        <div class="section-label"><span>Koneksi AI</span><small id="api-status">Belum diperiksa</small></div>
-        <label class="field-label" for="apiBase">Alamat backend</label>
-        <input id="apiBase" type="url" inputmode="url" placeholder="https://alamat-backend-kamu" autocomplete="url">
-        <p class="hint">Kosongkan jika frontend dan backend berada di alamat yang sama. API key tetap disimpan di server.</p>
-        <button id="checkApi" class="button button-secondary button-full" type="button">Periksa koneksi AI</button>
-      </div>
-
-      <div class="voice-settings">
-        <div class="section-label"><span>Suara browser</span><small>Pratinjau lokal</small></div>
-        <label for="voiceA">Suara ChatGPT</label>
-        <select id="voiceA"><option value="">Memuat suara…</option></select>
-        <label for="voiceB">Suara Gemini</label>
-        <select id="voiceB"><option value="">Memuat suara…</option></select>
-        <p id="voice-note" class="hint">Pilihan suara mengikuti suara yang tersedia di browser/perangkat Android.</p>
-      </div>
-
+      <label class="field-label" for="prompt">Prompt / arahan gambar dari ChatGPT</label>
+      <textarea id="prompt" rows="8" maxlength="6000" placeholder="Minta ChatGPT menyusun prompt gambar, lalu tempelkan instruksinya di sini. Contoh: Buat ilustrasi 2D vertikal 9:16..."></textarea>
+      <p class="hint">Tempel prompt lengkap di sini. Kamu juga bisa menambahkan arahan revisi setelah melihat hasil gambar Gemini.</p>
       <div class="controls">
-        <button id="start" class="button button-primary" type="button"><span>▶</span> Mulai diskusi</button>
-        <div class="control-row">
-          <button id="pause" class="button button-secondary" type="button" disabled>Ⅱ Jeda</button>
-          <button id="stop" class="button button-danger" type="button" disabled>■ Berhenti</button>
-        </div>
+        <button id="copyPrompt" class="button button-primary" type="button">Salin instruksi</button>
+        <button id="openGemini" class="button button-secondary button-full" type="button">Buka Gemini</button>
       </div>
-      <p class="demo-notice"><strong>Mode integrasi:</strong> tombol mulai akan meminta satu respons dari ChatGPT lalu satu tanggapan dari Gemini. Moderator otomatis dan percakapan tanpa batas akan ditambahkan pada tahap berikutnya.
+      <p id="feedback" class="demo-notice"><strong>Alur saat ini:</strong> ChatGPT menyusun arahan melalui aplikasinya. Salin arahan ke Gemini, aktifkan percakapan suara Gemini, lalu minta Gemini membuat atau merevisi gambar.</p>
     </section>
-
     <section class="transcript-card">
-      <div class="section-label"><span>Transkrip diskusi</span><small id="turn-count">0 giliran</small></div>
-      <div id="transcript" class="transcript" aria-live="polite">
-        <p class="empty-state">Percakapan demo akan muncul di sini.</p>
+      <div class="section-label"><span>Alur kerja</span><small>Versi Android</small></div>
+      <div class="transcript">
+        <article class="message"><span class="speaker speaker-a">1 · CHATGPT</span><p>Diskusikan ide, tentukan komposisi, gaya, rasio, detail, dan prompt gambar.</p></article>
+        <article class="message"><span class="speaker speaker-b">2 · GEMINI</span><p>Buka percakapan suara Gemini, kirim instruksi, lalu minta Gemini menghasilkan gambar.</p></article>
+        <article class="message"><span class="speaker speaker-moderator">3 · EVALUASI</span><p>Tunjukkan hasilnya ke ChatGPT atau jelaskan kekurangannya. ChatGPT menyiapkan instruksi revisi berikutnya.</p></article>
       </div>
     </section>
-
-    <footer><span>TCon · AI Voice Meeting</span><span>Phase 2 / 6</span></footer>
+    <footer><span>TCon · AI Image Director</span><span>Android MVP / Phase 1</span></footer>
   </main>
   <script src="./app.js"></script>
 </body>
