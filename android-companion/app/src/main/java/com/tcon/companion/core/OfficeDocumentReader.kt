@@ -141,7 +141,7 @@ object OfficeDocumentReader {
         ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
             while (true) {
                 val entry = zip.nextEntry ?: break
-                if (!entry.isDirectory && (only == null || entry.name in only)) {
+                if (!entry.isDirectory) {
                     val output = ByteArrayOutputStream()
                     val buffer = ByteArray(8 * 1024)
                     while (true) {
@@ -151,7 +151,7 @@ object OfficeDocumentReader {
                         require(total <= MAX_UNCOMPRESSED_BYTES) { "Isi Office terlalu besar untuk diproses dengan aman." }
                         output.write(buffer, 0, count)
                     }
-                    entries[entry.name] = output.toByteArray()
+                    if (only == null || entry.name in only) entries[entry.name] = output.toByteArray()
                 }
                 zip.closeEntry()
             }
