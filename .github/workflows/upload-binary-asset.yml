@@ -1,0 +1,43 @@
+name: Upload binary asset
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: Repository destination path (for example episodes/episode-01/thumbnail.png)
+        required: true
+        type: string
+      content_base64:
+        description: Base64-encoded file bytes
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Decode and commit binary asset
+        env:
+          ASSET_PATH: ${{ inputs.path }}
+          ASSET_BASE64: ${{ inputs.content_base64 }}
+        run: |
+          python - <<'PY'
+          import base64, os
+          from pathlib import Path
+          path = Path(os.environ["ASSET_PATH"])
+          if path.is_absolute() or ".." in path.parts or not path.parts:
+              raise SystemExit("Unsafe destination path")
+          data = base64.b64decode(os.environ["ASSET_BASE64"], validate=True)
+          if not data:
+              raise SystemExit("Empty asset")
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_bytes(data)
+          print(f"Wrote {path} ({len(data)} bytes)")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- "${ASSET_PATH}"
+          git commit -m "Upload binary asset: ${ASSET_PATH}"
+          git push
