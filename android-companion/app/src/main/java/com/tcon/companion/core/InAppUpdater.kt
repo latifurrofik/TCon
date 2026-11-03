@@ -42,7 +42,7 @@ class InAppUpdater(private val context: Context) {
         private const val FILE_PROVIDER_AUTHORITY = "com.tcon.companion.fileprovider"
         private const val MAX_APK_BYTES = 150L * 1024L * 1024L
         private const val DOWNLOAD_TIMEOUT_MS = 15L * 60L * 1000L
-        private val VERSION_PATTERN = Regex("\\d+\\.\\d+\\.\\d+")
+        private val VERSION_PATTERN = Regex("(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)")
     }
 
     suspend fun checkLatest(): TConUpdate? = withContext(Dispatchers.IO) {
@@ -259,7 +259,9 @@ class InAppUpdater(private val context: Context) {
         require(parts.size == 3 && parts[0] <= 2147 && parts[1] <= 999 && parts[2] <= 999) {
             "Versi rilis berada di luar rentang versionCode TCon."
         }
-        return parts[0] * 1_000_000L + parts[1] * 1_000L + parts[2]
+        val code = parts[0] * 1_000_000L + parts[1] * 1_000L + parts[2]
+        require(code in 2L..2_100_000_000L) { "Versi rilis berada di luar rentang versionCode Android." }
+        return code
     }
 
     private fun sha256(file: File): String {
