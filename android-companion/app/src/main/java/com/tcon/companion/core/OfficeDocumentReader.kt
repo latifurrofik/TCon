@@ -93,13 +93,13 @@ object OfficeDocumentReader {
                         }
                         "v", "t" -> if (inCell) {
                             val raw = parser.nextText()
-                            if (cellType == "s" && parser.name == "v") {
+                            if (cellType == "s" && localName(parser) == "v") {
                                 val index = raw.toIntOrNull()
                                 cellValue.append(index?.let { sharedStrings.getOrNull(it) } ?: raw)
                             } else cellValue.append(raw)
                         }
                     }
-                    XmlPullParser.END_TAG -> when (parser.name) {
+                    XmlPullParser.END_TAG -> when (localName(parser)) {
                         "c" -> {
                             output.append(cellValue).append(" | ")
                             inCell = false
