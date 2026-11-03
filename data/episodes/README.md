@@ -8,11 +8,7 @@ Setiap episode memiliki satu folder dengan pola `episode_N` (contoh: `episode_1`
 episode_N/
 ├── metadata.json
 ├── README.md
-├── hook/
-│   ├── README.md
-│   ├── hook-prompt.md
-│   ├── hook-image.webp
-│   └── candidates/
+├── thumbnail.jpg (atau thumbnail.png)
 ├── naskah/
 │   ├── naskah.md
 │   └── storyboard.json
@@ -27,11 +23,11 @@ episode_N/
 ## Aturan
 
 - `metadata.json`: metadata publikasi dan status produksi.
-- `hook/`: khusus gambar hook dan kandidatnya untuk episode tersebut. Gambar hook tidak masuk ke `public/assets/library/`.
+- `thumbnail.jpg` atau `thumbnail.png`: thumbnail YouTube final untuk episode tersebut, disimpan langsung di root folder episode (bukan di subfolder dan bukan di `public/assets/library/`).
 - `naskah/naskah.md`: naskah narasi Bahasa Indonesia yang mudah dibaca dan diedit.
 - `naskah/storyboard.json`: data mesin untuk scene, timing, narasi per scene, dan arahan visual. Ini menjadi input generator prompt.
 - `prompt/visual-prompts.json`: manifest prompt hasil generator; status awal setiap prompt adalah pending review.
-- `assets/`: aset visual khusus episode selain gambar hook. Aset reusable yang memang dipakai lintas episode tetap berada di `public/assets/library/`; jangan menggandakan tanpa alasan.
+- `assets/`: aset visual khusus episode selain thumbnail. Aset reusable yang memang dipakai lintas episode tetap berada di `public/assets/library/`; jangan menggandakan tanpa alasan.
 - `audio/`: voice-over dan audio khusus episode.
 - `output/`: preview dan hasil render episode. File render besar sebaiknya disimpan sebagai GitHub Actions artifact, bukan di-commit ke Git.
 - Folder dan file template memakai placeholder; jangan menganggap placeholder sebagai materi episode yang sudah disetujui.
