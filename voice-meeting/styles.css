@@ -35,3 +35,9 @@ textarea{resize:vertical;min-height:76px;line-height:1.5}textarea:focus,select:f
 .message{padding:11px 12px;border-radius:12px;background:#101827;border:1px solid var(--line)}.message .speaker{display:block;margin-bottom:5px;font-size:10px;font-weight:700;letter-spacing:.5px}.message p{margin:0;color:#dce5f4;font-size:12px;line-height:1.55}.speaker-moderator{color:#f2cf88}.speaker-a{color:var(--blue)}.speaker-b{color:var(--purple)}
 footer{display:flex;justify-content:space-between;margin:20px 4px 0;color:#74839b;font-size:10px}
 @media(max-width:390px){.app-shell{width:min(100% - 22px,680px)}.meeting-card,.transcript-card{padding:15px}.participants{grid-template-columns:1fr}.intro{padding-top:34px}}
+
+.api-settings{margin-top:17px;padding:15px;border:1px solid var(--line);border-radius:14px;background:#111a2a}
+.api-settings .field-label{margin-top:12px}
+.api-settings input{width:100%;border:1px solid #35445d;border-radius:12px;background:#101827;color:var(--text);padding:11px;outline:none}
+.api-settings input:focus{border-color:var(--blue)}
+.button-full{width:100%;margin-top:10px}
