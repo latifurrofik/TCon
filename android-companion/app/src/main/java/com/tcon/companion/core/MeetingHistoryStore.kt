@@ -93,8 +93,11 @@ class MeetingHistoryStore(context: Context) :
                 )""".trimIndent()
             )
         }
-        if (oldVersion < 3) createTasksTable(db)
-        if (oldVersion < 4) db.execSQL("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'MEDIUM'")
+        if (oldVersion < 3) {
+            createTasksTable(db)
+        } else if (oldVersion < 4) {
+            db.execSQL("ALTER TABLE tasks ADD COLUMN priority TEXT NOT NULL DEFAULT 'MEDIUM'")
+        }
     }
 
     private fun createTasksTable(db: SQLiteDatabase) {
