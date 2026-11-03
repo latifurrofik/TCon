@@ -85,7 +85,7 @@ class ProviderApiClient(
             if (previous?.first == role) {
                 groupedTurns[groupedTurns.lastIndex] = role to "${previous.second}\n\n$text"
             } else {
-                groupedTurns += role to text
+                groupedTurns.add(role to text)
             }
         }
         return when (id) {
