@@ -1,11 +1,17 @@
 package com.tcon.companion
 
+import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Typeface
 import android.os.Bundle
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
 import android.text.InputType
 import android.view.Gravity
 import android.view.ViewGroup
@@ -36,11 +42,17 @@ class MainActivity : Activity() {
     private lateinit var apiKeyVault: ApiKeyVault
     private lateinit var activityScope: CoroutineScope
     private var meetingJob: Job? = null
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var textToSpeech: TextToSpeech? = null
+    private var ttsReady = false
+    private var pendingVoiceStart = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         apiKeyVault = ApiKeyVault(this)
         activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        initializeTextToSpeech()
+        initializeSpeechRecognizer()
 
         val root = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -90,6 +102,8 @@ class MainActivity : Activity() {
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ))
         addButton(root, "Bagikan instruksi ke aplikasi AI") { sharePrompt() }
+        addButton(root, "Input instruksi dengan suara") { startVoiceInput() }
+        addButton(root, "Hentikan input / suara AI") { stopVoiceFeatures() }
         addButton(root, "Mulai diskusi dengan AI yang terhubung") { confirmAndStartMeeting() }
         addButton(root, "Hentikan diskusi") {
             meetingJob?.cancel()
@@ -128,8 +142,115 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
         activityScope.cancel()
         super.onDestroy()
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == REQUEST_RECORD_AUDIO) {
+            if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED && pendingVoiceStart) {
+                pendingVoiceStart = false
+                startVoiceInput()
+            } else {
+                pendingVoiceStart = false
+                toast("Izin mikrofon tidak diberikan.")
+            }
+        }
+    }
+
+    private fun initializeSpeechRecognizer() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            toast("Layanan pengenalan suara tidak tersedia di perangkat ini.")
+            return
+        }
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this).apply {
+            setRecognitionListener(object : RecognitionListener {
+                override fun onReadyForSpeech(params: Bundle?) = toast("Silakan bicara.")
+                override fun onBeginningOfSpeech() = Unit
+                override fun onRmsChanged(rmsdB: Float) = Unit
+                override fun onBufferReceived(buffer: ByteArray?) = Unit
+                override fun onEndOfSpeech() = Unit
+                override fun onError(error: Int) = toast("Input suara berhenti. Coba lagi.")
+                override fun onResults(results: Bundle?) {
+                    val spoken = results
+                        ?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        ?.firstOrNull()
+                    if (!spoken.isNullOrBlank()) {
+                        promptInput.setText(spoken)
+                        promptInput.setSelection(promptInput.text.length)
+                        toast("Instruksi suara berhasil ditranskripsikan.")
+                    }
+                }
+                override fun onPartialResults(partialResults: Bundle?) = Unit
+                override fun onEvent(eventType: Int, params: Bundle?) = Unit
+            })
+        }
+    }
+
+    private fun startVoiceInput() {
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            pendingVoiceStart = true
+            requestPermissions(arrayOf(Manifest.permission.RECORD_AUDIO), REQUEST_RECORD_AUDIO)
+            return
+        }
+        val recognizer = speechRecognizer
+        if (recognizer == null) {
+            toast("Pengenalan suara belum tersedia.")
+            return
+        }
+        textToSpeech?.stop()
+        val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE, "id-ID")
+            putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE, "id-ID")
+            putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, false)
+            putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+        }
+        runCatching { recognizer.startListening(intent) }
+            .onFailure { toast("Tidak dapat memulai mikrofon: ${it.message}") }
+    }
+
+    private fun initializeTextToSpeech() {
+        textToSpeech = TextToSpeech(this) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                val languageStatus = textToSpeech?.setLanguage(Locale("id", "ID"))
+                ttsReady = languageStatus != TextToSpeech.LANG_MISSING_DATA &&
+                    languageStatus != TextToSpeech.LANG_NOT_SUPPORTED
+                if (!ttsReady) toast("Suara Bahasa Indonesia belum tersedia. Periksa mesin TTS Android.")
+            } else {
+                toast("Mesin text-to-speech gagal diinisialisasi.")
+            }
+        }
+    }
+
+    private fun speakAiResponse(provider: ProviderId?, text: String) {
+        val tts = textToSpeech ?: return
+        if (!ttsReady) return
+        val pitch = when (provider) {
+            ProviderId.OPENAI -> 1.0f
+            ProviderId.GEMINI -> 1.12f
+            ProviderId.CLAUDE -> 0.9f
+            null -> 1.0f
+        }
+        tts.setPitch(pitch)
+        tts.setSpeechRate(1.0f)
+        tts.speak(text, TextToSpeech.QUEUE_ADD, null, "tcon-${provider?.name ?: "ai"}-${System.currentTimeMillis()}")
+    }
+
+    private fun stopVoiceFeatures() {
+        speechRecognizer?.cancel()
+        textToSpeech?.stop()
+        toast("Input dan output suara dihentikan.")
     }
 
     private fun addSection(parent: LinearLayout, label: String) {
@@ -247,6 +368,7 @@ class MainActivity : Activity() {
                     initialMessages = initial
                 ) { message ->
                     appendTranscript(providerName(message.provider), message.content)
+                    speakAiResponse(message.provider, message.content)
                 }
                 appendTranscript("TCon", "Diskusi selesai.")
             } catch (cancelled: CancellationException) {
@@ -303,6 +425,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val KEY_PROMPT = "saved_prompt"
+        private const val REQUEST_RECORD_AUDIO = 4107
         private const val CHATGPT_PACKAGE = "com.openai.chatgpt"
         private const val GEMINI_PACKAGE = "com.google.android.apps.bard"
         private const val CLAUDE_PACKAGE = "com.anthropic.claude"
