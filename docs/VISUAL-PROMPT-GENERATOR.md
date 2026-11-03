@@ -15,16 +15,18 @@ python scripts/generate_prompts.py
 ```
 
 Defaults:
-- Input: `data/episode-01.json`
-- Output: `data/prompt-manifests/episode-01.prompts.json`
+- Input: `data/episodes/episode_1/naskah/storyboard.json`
+- Output: `data/episodes/episode_1/prompt/visual-prompts.json`
 
-For another episode:
+For another episode, pass its storyboard file. The output is automatically placed in that episode's `prompt/` folder:
 
 ```bash
-python scripts/generate_prompts.py --episode data/episodes/episode-02.json
+python scripts/generate_prompts.py --episode data/episodes/episode_2/naskah/storyboard.json
 ```
 
-The generator refuses to overwrite an existing manifest. Use `--overwrite` only when intentionally regenerating it:
+Legacy JSON episode files remain supported; their manifests continue to use `data/prompt-manifests/` unless `--output` is supplied.
+
+The generator refuses to overwrite an existing manifest. The default input/output follow the canonical `episode_N` workspace. Use `--overwrite` only when intentionally regenerating it:
 
 ```bash
 python scripts/generate_prompts.py --overwrite
