@@ -66,14 +66,22 @@ class ProviderApiClient(
         systemInstruction: String,
         conversation: List<AiMessage>
     ): Triple<String, JSONObject, Map<String, String>> {
+        // Each provider must see its own earlier turns as assistant messages,
+        // while peer-AI contributions are presented as attributed user context.
+        // This prevents one model from mistaking another model's words for its own.
         val turns = conversation.filter { it.role != MessageRole.SYSTEM }
+        fun roleFor(message: AiMessage, assistantRole: String, userRole: String) =
+            if (message.provider == id) assistantRole else userRole
+        fun contentFor(message: AiMessage) =
+            if (message.provider == null) message.content
+            else "[${providerLabel(message.provider)} berkata]:\n${message.content}"
         return when (id) {
             ProviderId.OPENAI -> {
                 val input = JSONArray()
                 turns.forEach { message ->
                     input.put(JSONObject()
-                        .put("role", if (message.role == MessageRole.ASSISTANT) "assistant" else "user")
-                        .put("content", message.content))
+                        .put("role", roleFor(message, "assistant", "user"))
+                        .put("content", contentFor(message)))
                 }
                 Triple(
                     "https://api.openai.com/v1/responses",
@@ -85,8 +93,8 @@ class ProviderApiClient(
                 val contents = JSONArray()
                 turns.forEach { message ->
                     contents.put(JSONObject()
-                        .put("role", if (message.role == MessageRole.ASSISTANT) "model" else "user")
-                        .put("parts", JSONArray().put(JSONObject().put("text", message.content))))
+                        .put("role", roleFor(message, "model", "user"))
+                        .put("parts", JSONArray().put(JSONObject().put("text", contentFor(message)))))
                 }
                 Triple(
                     "https://generativelanguage.googleapis.com/v1beta/models/$model:generateContent",
@@ -100,8 +108,8 @@ class ProviderApiClient(
                 val messages = JSONArray()
                 turns.forEach { message ->
                     messages.put(JSONObject()
-                        .put("role", if (message.role == MessageRole.ASSISTANT) "assistant" else "user")
-                        .put("content", message.content))
+                        .put("role", roleFor(message, "assistant", "user"))
+                        .put("content", contentFor(message)))
                 }
                 Triple(
                     "https://api.anthropic.com/v1/messages",
@@ -111,6 +119,12 @@ class ProviderApiClient(
                 )
             }
         }
+    }
+
+    private fun providerLabel(provider: ProviderId): String = when (provider) {
+        ProviderId.OPENAI -> "GPT"
+        ProviderId.GEMINI -> "Gemini"
+        ProviderId.CLAUDE -> "Claude"
     }
 
     private fun extractText(json: JSONObject): String = when (id) {
