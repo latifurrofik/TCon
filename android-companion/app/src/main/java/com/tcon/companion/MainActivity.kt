@@ -558,7 +558,7 @@ class MainActivity : Activity() {
                 val names = selected.joinToString { providerName(it) }
                 AlertDialog.Builder(this)
                     .setTitle("Konfirmasi biaya API")
-                    .setMessage("Peserta: $names. Putaran: $rounds. Permintaan API dapat menggunakan kuota dan menimbulkan biaya. Lanjutkan?")
+                    .setMessage("Peserta: $names. Putaran: $rounds. Lampiran: ${selectedAttachments.size + selectedBinaryAttachments.size} file. PDF/gambar dikirim ke setiap AI terpilih dan dapat menambah penggunaan token/biaya API. Lanjutkan?")
                     .setPositiveButton("Mulai") { _, _ ->
                         startMeeting(topic, selectedProviders, rounds)
                     }
