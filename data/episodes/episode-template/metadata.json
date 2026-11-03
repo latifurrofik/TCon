@@ -1,0 +1,37 @@
+{
+  "episode_number": 0,
+  "episode_id": "episode-0",
+  "series_id": "disetir-media-sosial",
+  "title": "",
+  "title_alternatives": [],
+  "description": "",
+  "hashtags": [],
+  "tags": [],
+  "category": "Education",
+  "language": "id-ID",
+  "target_audience": "Penonton Indonesia",
+  "format": {
+    "platform": "YouTube Shorts",
+    "width": 1080,
+    "height": 1920,
+    "fps": 30,
+    "target_duration_seconds": 50
+  },
+  "status": {
+    "research": "pending",
+    "script": "draft",
+    "storyboard": "pending",
+    "prompts": "pending",
+    "assets": "pending",
+    "audio": "pending",
+    "render": "pending",
+    "publication": "not_approved"
+  },
+  "schedule": {
+    "publish_at": null,
+    "timezone": "Asia/Jakarta"
+  },
+  "sources": [],
+  "created_at": null,
+  "updated_at": null
+}
