@@ -25,7 +25,7 @@ def request_image(api_key: str, prompt: str) -> bytes:
         "input": prompt,
         "response_format": {
             "type": "image",
-            "mime_type": "image/png",
+            "mime_type": "image/jpeg",
             "aspect_ratio": "9:16",
             "image_size": "1K"
         }
@@ -63,7 +63,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
 
     for index, scene in enumerate(episode["scenes"], start=1):
-        target = OUT / f"scene-{index:02d}.png"
+        target = OUT / f"scene-{index:02d}.jpg"
         if target.exists() and os.getenv("OVERWRITE_IMAGES", "false").lower() != "true":
             print(f"SKIP existing {target}")
             continue
