@@ -31,6 +31,7 @@ import com.tcon.companion.core.ApiKeyVault
 import com.tcon.companion.core.MeetingConfig
 import com.tcon.companion.core.MeetingOrchestrator
 import com.tcon.companion.core.MeetingHistoryStore
+import com.tcon.companion.core.InAppUpdater
 import com.tcon.companion.core.OfficeDocumentReader
 import com.tcon.companion.core.MessageRole
 import com.tcon.companion.core.ProviderApiClient
@@ -88,8 +89,9 @@ class MainActivity : Activity() {
         root.addView(TextView(this).apply {
             text = "Ruang kerja kolaborasi GPT, Gemini, dan Claude"
             textSize = 15f
-            setPadding(0, 8, 0, 20)
+            setPadding(0, 8, 0, 12)
         })
+        addButton(root, "Periksa pembaruan TCon") { checkForAppUpdate() }
 
         addSection(root, "APLIKASI AI")
         addButton(root, "Buka ChatGPT") { openApp(CHATGPT_PACKAGE, "ChatGPT") }
@@ -174,6 +176,51 @@ class MainActivity : Activity() {
 
         val scroll = ScrollView(this).apply { addView(root) }
         setContentView(scroll)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        try {
+            InAppUpdater(this).resumePendingInstall(this)
+        } catch (error: Exception) {
+            toast("Tidak dapat membuka pemasang TCon: ${error.message ?: "kesalahan tidak diketahui"}")
+        }
+    }
+
+    private fun checkForAppUpdate() {
+        toast("Memeriksa rilis TCon di GitHub...")
+        activityScope.launch {
+            try {
+                val updater = InAppUpdater(this@MainActivity)
+                val update = updater.checkLatest()
+                if (update == null) {
+                    AlertDialog.Builder(this@MainActivity)
+                        .setTitle("TCon sudah terbaru")
+                        .setMessage("Versi yang terpasang sudah sama dengan rilis stabil terbaru.")
+                        .setPositiveButton("Tutup", null)
+                        .show()
+                    return@launch
+                }
+                val notes = update.notes.take(1800).ifBlank { "Tidak ada catatan rilis." }
+                AlertDialog.Builder(this@MainActivity)
+                    .setTitle("Pembaruan TCon " + update.version)
+                    .setMessage("Versi baru tersedia.\n\n" + notes + "\n\nAPK akan diunduh dari GitHub Releases. TCon memeriksa ukuran dan SHA-256 file, lalu Android memverifikasi tanda tangan aplikasi sebelum instalasi.")
+                    .setPositiveButton("Unduh dan instal") { _, _ ->
+                        activityScope.launch {
+                            try {
+                                toast("Mengunduh TCon " + update.version + "...")
+                                InAppUpdater(this@MainActivity).downloadAndInstall(this@MainActivity, update)
+                            } catch (error: Exception) {
+                                toast("Pembaruan gagal: " + (error.message ?: "kesalahan tidak diketahui"))
+                            }
+                        }
+                    }
+                    .setNegativeButton("Nanti", null)
+                    .show()
+            } catch (error: Exception) {
+                toast("Tidak dapat memeriksa pembaruan: " + (error.message ?: "periksa koneksi internet"))
+            }
+        }
     }
 
     private fun openDocumentPicker() {
