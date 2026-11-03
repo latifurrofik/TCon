@@ -122,9 +122,9 @@ class MainActivity : Activity() {
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
         ))
         addButton(root, "Bagikan instruksi ke aplikasi AI") { sharePrompt() }
-        addButton(root, "Lampirkan dokumen untuk diskusi") { openDocumentPicker() }
+        addButton(root, "Lampirkan file, PDF, atau gambar") { openDocumentPicker() }
         attachmentStatusView = TextView(this).apply {
-            text = "Belum ada dokumen terlampir."
+            text = "TXT/CSV/JSON/MD, PDF, JPG, PNG, atau WebP. Maksimal 5 file."
             textSize = 12f
             setPadding(0, 4, 0, 8)
         }
@@ -177,7 +177,7 @@ class MainActivity : Activity() {
 
     private fun openDocumentPicker() {
         if (selectedAttachments.size + selectedBinaryAttachments.size >= TextAttachmentReader.MAX_FILES) {
-            toast("Maksimal ${TextAttachmentReader.MAX_FILES} dokumen per diskusi.")
+            toast("Maksimal ${TextAttachmentReader.MAX_FILES} file per diskusi.")
             return
         }
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
