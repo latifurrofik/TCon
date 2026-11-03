@@ -53,6 +53,27 @@ class MeetingOrchestratorTest {
         assertTrue(result.all { it.content.length <= 120 })
     }
 
+    @Test fun repeatsSelectedParticipantsForEachConfiguredRound() = runBlocking {
+        val gpt = FakeProvider(ProviderId.OPENAI, "GPT")
+        val claude = FakeProvider(ProviderId.CLAUDE, "Claude")
+        val result = MeetingOrchestrator(mapOf(
+            ProviderId.OPENAI to gpt,
+            ProviderId.CLAUDE to claude
+        )).runMeeting(
+            MeetingConfig("Evaluasi", listOf(ProviderId.OPENAI, ProviderId.CLAUDE), maxTurnsPerProvider = 3),
+            listOf(AiMessage("user-1", MessageRole.USER, "Evaluasi rencana ini."))
+        )
+        assertEquals(
+            listOf(
+                ProviderId.OPENAI, ProviderId.CLAUDE,
+                ProviderId.OPENAI, ProviderId.CLAUDE,
+                ProviderId.OPENAI, ProviderId.CLAUDE
+            ),
+            result.drop(1).map { it.provider }
+        )
+        assertEquals(7, result.size)
+    }
+
     @Test fun recordsProviderFailuresWithoutAbortingMeeting() = runBlocking {
         val broken = object : AiProvider {
             override val id = ProviderId.CLAUDE
