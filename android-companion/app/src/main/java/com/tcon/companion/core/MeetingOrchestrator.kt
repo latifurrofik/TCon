@@ -37,7 +37,7 @@ class MeetingOrchestrator(
                     systemInstruction = instruction,
                     conversation = transcript.toList(),
                     maxResponseCharacters = config.maxResponseCharacters,
-                    attachments = config.attachments
+                    attachments = if (transcript.none { it.provider == provider.id }) config.attachments else emptyList()
                 )
                 val content = result.getOrElse { error ->
                     "Provider ${provider.displayName} gagal merespons: " +
