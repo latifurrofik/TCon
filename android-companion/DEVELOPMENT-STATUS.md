@@ -17,7 +17,7 @@
 - Indonesian push-to-talk speech recognition with runtime microphone permission.
 - Sequential TTS playback of provider responses; microphone is cancelled when the app goes to background.
 - Unit tests for orchestration order, transcript propagation, turn/length bounds, provider failure handling, and repeated participant rounds.
-- In-app updater: checks latest stable GitHub Release, validates semantic version and APK asset metadata, downloads via DownloadManager (150 MB cap / 15-minute timeout), verifies exact asset size and GitHub SHA-256 digest, then opens Android's package installer through FileProvider. User approval and Android's unknown-app installation permission remain required.
+- In-app updater: checks latest stable GitHub Release, validates semantic version and monotonic versionCode, bounds DownloadManager transfer size (150 MB cap / 15-minute timeout), verifies exact asset size and GitHub SHA-256 digest, checks APK package ID/versionName/versionCode, then opens Android's package installer through FileProvider. User approval and Android's unknown-app installation permission remain required.
 - Manual signed-release workflow added. It builds/tests a signed APK and publishes it as a GitHub Release asset when release signing secrets are configured.
 
 ## Not implemented yet
@@ -26,7 +26,7 @@
 - DOCX/XLSX extraction currently reads document text and worksheet cell values only; embedded images, charts, macros, formulas without cached values, and complex layout are not interpreted. Audio and video ingestion are not implemented. PDF and JPEG/PNG/WebP binary attachments are temporary in-memory inputs; they are not stored in meeting history or persisted as project files.
 - Automatic memory extraction/summarization and artifact management; project memory is currently a simple user-managed notes store.
 - Task due-date editing, reminders/notifications, and task workflow automation.
-- The in-app updater cannot find an installable update until a stable GitHub Release with a signed APK asset is published. Permanent release-signing secrets and a first signed release are still required. A debug APK cannot normally be upgraded in place to a differently signed production APK.
+- The in-app updater cannot find an installable update until a stable GitHub Release with a signed APK asset is published. The signed-release workflow derives versionCode from semantic version using major × 1,000,000 + minor × 1,000 + patch, and refuses to reuse a Git tag. Permanent release-signing secrets and a first signed release are still required. A debug APK cannot normally be upgraded in place to a differently signed production APK.
 - DOCX/XLSX extraction currently reads document text and worksheet cell values only; embedded images, charts, macros, formulas without cached values, and complex layout are not interpreted. Audio and video ingestion are not implemented. PDF and JPEG/PNG/WebP binary attachments are temporary in-memory inputs; they are not stored in meeting history or persisted as project files.
 - Automatic reading of responses from consumer ChatGPT/Gemini/Claude apps (not exposed through the handoff intents).
 
