@@ -46,6 +46,14 @@
         </article>
       </div>
 
+      <div class="api-settings">
+        <div class="section-label"><span>Koneksi AI</span><small id="api-status">Belum diperiksa</small></div>
+        <label class="field-label" for="apiBase">Alamat backend</label>
+        <input id="apiBase" type="url" inputmode="url" placeholder="https://alamat-backend-kamu" autocomplete="url">
+        <p class="hint">Kosongkan jika frontend dan backend berada di alamat yang sama. API key tetap disimpan di server.</p>
+        <button id="checkApi" class="button button-secondary button-full" type="button">Periksa koneksi AI</button>
+      </div>
+
       <div class="voice-settings">
         <div class="section-label"><span>Suara browser</span><small>Pratinjau lokal</small></div>
         <label for="voiceA">Suara ChatGPT</label>
@@ -62,7 +70,7 @@
           <button id="stop" class="button button-danger" type="button" disabled>■ Berhenti</button>
         </div>
       </div>
-      <p class="demo-notice"><strong>Mode fondasi:</strong> ini hanya demo suara lokal dari browser. ChatGPT API, Gemini API, moderator AI, dan percakapan otomatis belum dihubungkan.</p>
+      <p class="demo-notice"><strong>Mode integrasi:</strong> tombol mulai akan meminta satu respons dari ChatGPT lalu satu tanggapan dari Gemini. Moderator otomatis dan percakapan tanpa batas akan ditambahkan pada tahap berikutnya.
     </section>
 
     <section class="transcript-card">
@@ -72,7 +80,7 @@
       </div>
     </section>
 
-    <footer><span>TCon · AI Voice Meeting</span><span>Phase 1 / 6</span></footer>
+    <footer><span>TCon · AI Voice Meeting</span><span>Phase 2 / 6</span></footer>
   </main>
   <script src="./app.js"></script>
 </body>
