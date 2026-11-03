@@ -3,6 +3,11 @@ name: TCon cloud Shorts production
 on:
   workflow_dispatch:
     inputs:
+      generate_images:
+        description: Try free AI Horde scene images (may be blocked or queued)
+        required: true
+        type: boolean
+        default: false
       overwrite_images:
         description: Regenerate existing scene images
         required: true
@@ -19,40 +24,57 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-
+          python-version: '3.11'
       - name: Install Remotion dependencies
         run: |
           npm install
           npx remotion browser ensure
-
       - name: Install media dependencies
         run: python -m pip install -r requirements-media.txt
-
-      - name: Generate scene illustrations (free AI Horde)
+      - name: Generate scene illustrations (optional free AI Horde)
+        if: ${{ inputs.generate_images }}
+        continue-on-error: true
         env:
           OVERWRITE_IMAGES: ${{ inputs.overwrite_images }}
           AI_HORDE_API_KEY: ${{ secrets.AI_HORDE_API_KEY }}
         run: python scripts/generate_images.py
-
+      - name: Select visual rendering mode
+        id: visual_mode
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          folder = Path('public/images/episode-01')
+          expected = [folder / f'scene-{i:02d}.webp' for i in range(1, 6)]
+          ready = all(path.is_file() and path.stat().st_size > 0 for path in expected)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'use_generated_assets={str(ready).lower()}\\n')
+          print('Visual mode: ' + ('generated-assets' if ready else 'built-in-motion-graphics'))
+          if not ready:
+              print('AI images unavailable or incomplete; using Remotion motion graphics.')
+          PY
       - name: Generate Indonesian narration and timed subtitles
         run: python scripts/generate_voice.py
-
       - name: TypeScript validation
         run: npm run typecheck
-
       - name: Render vertical Shorts MP4
-        run: npm run render:episode-01:assets
-
+        env:
+          USE_GENERATED_ASSETS: ${{ steps.visual_mode.outputs.use_generated_assets }}
+        shell: bash
+        run: |
+          if [ "$USE_GENERATED_ASSETS" = "true" ]; then
+            npm run render:episode-01:assets
+          else
+            npm run render:episode-01:motion
+          fi
       - name: Upload rendered video and assets
         uses: actions/upload-artifact@v4
         with:
