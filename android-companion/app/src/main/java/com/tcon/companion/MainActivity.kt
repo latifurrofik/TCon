@@ -16,8 +16,10 @@ import android.text.InputType
 import android.view.Gravity
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.CheckBox
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.NumberPicker
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -345,16 +347,71 @@ class MainActivity : Activity() {
             return
         }
 
-        val names = configured.keys.joinToString { providerName(it) }
+        val prefs = getPreferences(MODE_PRIVATE)
+        val savedSelection = prefs.getStringSet(KEY_PARTICIPANTS, null)
+        val participantChecks = configured.keys.map { provider ->
+            CheckBox(this).apply {
+                text = providerName(provider)
+                isChecked = savedSelection?.contains(provider.name) ?: true
+                tag = provider
+            }
+        }
+        val roundsPicker = NumberPicker(this).apply {
+            minValue = 1
+            maxValue = 5
+            wrapSelectorWheel = false
+            value = prefs.getInt(KEY_MEETING_ROUNDS, 1).coerceIn(1, 5)
+        }
+        val content = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(48, 12, 48, 8)
+            addView(TextView(this@MainActivity).apply {
+                text = "Pilih AI yang ikut diskusi:"
+                textSize = 15f
+                setPadding(0, 0, 0, 8)
+            })
+            participantChecks.forEach { addView(it) }
+            addView(TextView(this@MainActivity).apply {
+                text = "Jumlah putaran (setiap AI mendapat satu giliran per putaran):"
+                textSize = 14f
+                setPadding(0, 18, 0, 0)
+            })
+            addView(roundsPicker, LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+            ))
+        }
+
         AlertDialog.Builder(this)
-            .setTitle("Mulai diskusi multi-AI?")
-            .setMessage("AI yang aktif: $names. Permintaan API dapat menggunakan kuota dan menimbulkan biaya. Lanjutkan?")
-            .setPositiveButton("Mulai") { _, _ -> startMeeting(topic, configured) }
+            .setTitle("Atur diskusi TCon")
+            .setView(content)
+            .setPositiveButton("Lanjut") { _, _ ->
+                val selected = participantChecks.filter { it.isChecked }
+                    .mapNotNull { it.tag as? ProviderId }
+                if (selected.isEmpty()) {
+                    toast("Pilih minimal satu AI.")
+                    return@setPositiveButton
+                }
+                val rounds = roundsPicker.value
+                prefs.edit()
+                    .putStringSet(KEY_PARTICIPANTS, selected.map { it.name }.toSet())
+                    .putInt(KEY_MEETING_ROUNDS, rounds)
+                    .apply()
+                val selectedProviders = configured.filterKeys { it in selected }
+                val names = selected.joinToString { providerName(it) }
+                AlertDialog.Builder(this)
+                    .setTitle("Konfirmasi biaya API")
+                    .setMessage("Peserta: $names. Putaran: $rounds. Permintaan API dapat menggunakan kuota dan menimbulkan biaya. Lanjutkan?")
+                    .setPositiveButton("Mulai") { _, _ ->
+                        startMeeting(topic, selectedProviders, rounds)
+                    }
+                    .setNegativeButton("Batal", null)
+                    .show()
+            }
             .setNegativeButton("Batal", null)
             .show()
     }
 
-    private fun startMeeting(topic: String, providers: Map<ProviderId, ProviderApiClient>) {
+    private fun startMeeting(topic: String, providers: Map<ProviderId, ProviderApiClient>, rounds: Int) {
         meetingJob?.cancel()
         textToSpeech?.stop()
         transcriptView.text = ""
@@ -372,7 +429,7 @@ class MainActivity : Activity() {
                     config = MeetingConfig(
                         topic = topic,
                         participants = providers.keys.toList(),
-                        maxTurnsPerProvider = 1,
+                        maxTurnsPerProvider = rounds,
                         maxResponseCharacters = 1400
                     ),
                     initialMessages = initial
@@ -434,6 +491,8 @@ class MainActivity : Activity() {
 
     companion object {
         private const val KEY_PROMPT = "saved_prompt"
+        private const val KEY_PARTICIPANTS = "meeting_participants"
+        private const val KEY_MEETING_ROUNDS = "meeting_rounds"
         private const val REQUEST_RECORD_AUDIO = 4107
         private const val CHATGPT_PACKAGE = "com.openai.chatgpt"
         private const val GEMINI_PACKAGE = "com.google.android.apps.bard"
