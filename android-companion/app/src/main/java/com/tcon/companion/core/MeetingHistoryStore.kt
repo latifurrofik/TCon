@@ -26,6 +26,17 @@ data class MeetingHistoryEntry(
     val createdAt: Long
 )
 
+enum class TaskStatus { TODO, IN_PROGRESS, DONE }
+
+data class TConTask(
+    val id: Long,
+    val title: String,
+    val details: String,
+    val status: TaskStatus,
+    val dueAt: Long?,
+    val updatedAt: Long
+)
+
 /**
  * Private, on-device meeting history. No transcript content is uploaded or backed up.
  */
@@ -66,6 +77,7 @@ class MeetingHistoryStore(context: Context) :
             )""".trimIndent()
         )
         db.execSQL("CREATE INDEX idx_entries_meeting ON entries(meeting_id, id)")
+        createTasksTable(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -79,6 +91,81 @@ class MeetingHistoryStore(context: Context) :
                 )""".trimIndent()
             )
         }
+        if (oldVersion < 3) createTasksTable(db)
+    }
+
+    private fun createTasksTable(db: SQLiteDatabase) {
+        db.execSQL(
+            """CREATE TABLE tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                details TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'TODO',
+                due_at INTEGER,
+                updated_at INTEGER NOT NULL
+            )""".trimIndent()
+        )
+        db.execSQL("CREATE INDEX idx_tasks_status_updated ON tasks(status, updated_at DESC)")
+    }
+
+    fun addTask(title: String, details: String = "", dueAt: Long? = null): Long {
+        require(title.isNotBlank()) { "Judul tugas tidak boleh kosong." }
+        val values = ContentValues().apply {
+            put("title", title.trim())
+            put("details", details.trim())
+            put("status", TaskStatus.TODO.name)
+            if (dueAt == null) putNull("due_at") else put("due_at", dueAt)
+            put("updated_at", System.currentTimeMillis())
+        }
+        return writableDatabase.insertOrThrow("tasks", null, values)
+    }
+
+    fun listTasks(): List<TConTask> {
+        val result = mutableListOf<TConTask>()
+        readableDatabase.query(
+            "tasks", arrayOf("id", "title", "details", "status", "due_at", "updated_at"),
+            null, null, null, null,
+            "CASE status WHEN 'TODO' THEN 0 WHEN 'IN_PROGRESS' THEN 1 ELSE 2 END, " +
+                "CASE WHEN due_at IS NULL THEN 1 ELSE 0 END, due_at ASC, updated_at DESC"
+        ).use { cursor ->
+            while (cursor.moveToNext()) {
+                result += TConTask(
+                    id = cursor.getLong(0),
+                    title = cursor.getString(1),
+                    details = cursor.getString(2),
+                    status = runCatching { TaskStatus.valueOf(cursor.getString(3)) }.getOrDefault(TaskStatus.TODO),
+                    dueAt = if (cursor.isNull(4)) null else cursor.getLong(4),
+                    updatedAt = cursor.getLong(5)
+                )
+            }
+        }
+        return result
+    }
+
+    fun updateTaskStatus(id: Long, status: TaskStatus) {
+        writableDatabase.update(
+            "tasks",
+            ContentValues().apply {
+                put("status", status.name)
+                put("updated_at", System.currentTimeMillis())
+            },
+            "id = ?", arrayOf(id.toString())
+        )
+    }
+
+    fun updateTask(id: Long, title: String, details: String, dueAt: Long?) {
+        require(title.isNotBlank()) { "Judul tugas tidak boleh kosong." }
+        val values = ContentValues().apply {
+            put("title", title.trim())
+            put("details", details.trim())
+            if (dueAt == null) putNull("due_at") else put("due_at", dueAt)
+            put("updated_at", System.currentTimeMillis())
+        }
+        writableDatabase.update("tasks", values, "id = ?", arrayOf(id.toString()))
+    }
+
+    fun deleteTask(id: Long) {
+        writableDatabase.delete("tasks", "id = ?", arrayOf(id.toString()))
     }
 
     fun addMemory(title: String, content: String): Long {
@@ -171,6 +258,6 @@ class MeetingHistoryStore(context: Context) :
 
     companion object {
         private const val DATABASE_NAME = "tcon_meeting_history.db"
-        private const val DATABASE_VERSION = 2
+        private const val DATABASE_VERSION = 3
     }
 }
