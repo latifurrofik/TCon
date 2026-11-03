@@ -27,7 +27,8 @@ Requirements: JDK 17, Android SDK Platform 35, Android 8.0 (API 26) or newer.
 - Model IDs are entered by the user because model availability and names can change.
 - App handoff does not read replies from ChatGPT, Gemini, or Claude consumer apps. Automatic discussion uses the optional official API adapters.
 - Voice is currently push-to-talk and sequential TTS, not continuous full-duplex or hands-free conversation. Distinct AI speakers currently use pitch differences, not guaranteed separate natural voices.
-- Streaming, automatic memory extraction/summarization, file ingestion, task automation, and in-app updates are not implemented yet. Meeting history and manually managed project notes are stored locally on the device.
+- PDF, DOCX, XLSX, images, audio, and video are not supported by the current attachment reader. Attachments are text-only, limited in size, and held temporarily in memory for the current app session; original files are not uploaded as binary files.
+- Streaming, automatic memory extraction/summarization, task automation, and in-app updates are not implemented yet. Meeting history and manually managed project notes are stored locally on the device.
 - The Claude app package ID is configured as `com.anthropic.claude`; verify on the target phone.
 
 ## Security principles
